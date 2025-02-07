@@ -9,11 +9,12 @@ import {
   CSidebarHeader,
   CSidebarToggler,
 } from '@coreui/react'
-import CIcon from '@coreui/icons-react'
+import CIcon, { CIconSvg } from '@coreui/icons-react'
 
 import { AppSidebarNav } from './AppSidebarNav'
 
 import { logo } from 'src/assets/brand/logo'
+import CustomIcon from 'src/assets/brand/logobaznas'
 import { sygnet } from 'src/assets/brand/sygnet'
 
 // sidebar nav config
@@ -27,7 +28,6 @@ const AppSidebar = () => {
   return (
     <CSidebar
       className="border-end"
-      colorScheme="dark"
       position="fixed"
       unfoldable={unfoldable}
       visible={sidebarShow}
@@ -35,7 +35,8 @@ const AppSidebar = () => {
         dispatch({ type: 'set', sidebarShow: visible })
       }}
     >
-      <CSidebarHeader className="border-bottom">
+      <CSidebarHeader className="border-bottom" style={{ backgroundColor: 'white', color: 'white' }}>
+        
         <CSidebarBrand to="/">
           <CIcon customClassName="sidebar-brand-full" icon={logo} height={32} />
           <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} />
