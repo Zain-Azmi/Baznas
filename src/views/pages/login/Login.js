@@ -15,13 +15,14 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
-
+import CustomIcon from 'src/assets/brand/logobaznas'
 
 const Login = () => {
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-column">
   {/* Header di atas CContainer */}
   <div className="bg-primary text-white py-3 px-4 w-100 text-center">
+  <CustomIcon />
   </div>
 
   {/* Wrapper supaya card tetap di tengah */}
