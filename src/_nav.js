@@ -23,87 +23,28 @@ const _nav = [
     },
   },
   {
-    component: CNavGroup,
+    component: CNavItem,
     name: 'Permohonan Bantuan',
+    to: '/permohonanbantuan',
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Daftar Permohonan',
-        to: '/icons/coreui-icons',
-      },
-      {
-        component: CNavItem,
-        name: 'Verifikasi Permohonan',
-        to: '/icons/flags',
-      },
-      {
-        component: CNavItem,
-        name: 'Permohonan Disetujui',
-        to: '/icons/brands',
-      },
-      {
-        component: CNavItem,
-        name: 'Permohonan Ditolak',
-        to: '/icons/brands',
-      },
-      {
-        component: CNavItem,
-        name: 'Permohonan Revisi',
-        to: '/icons/brands',
-      },
-    ],
   },
   {
-    component: CNavGroup,
+    component: CNavItem,
     name: 'Manajemen Bantuan',
+    to: '/manajemenbantuan',
     icon: <CIcon icon={cilApps} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Kelola Jenis Bantuan',
-        to: '/notifications/alerts',
-      },
-      {
-        component: CNavItem,
-        name: 'Persyaratan Dokumen',
-        to: '/notifications/badges',
-      }
-    ],
   },
-  {
-    component: CNavGroup,
+ {
+    component: CNavItem,
     name: 'Manajemen Pengguna',
+    to: '/manajemenpengguna',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Admin & Verifikator',
-        to: '/notifications/alerts',
-      },
-      {
-        component: CNavItem,
-        name: 'Hak Akses',
-        to: '/notifications/badges',
-      }
-    ],
   },
   {
-    component: CNavGroup,
+    component: CNavItem,
     name: 'Laporan & Statistik',
+    to: '/laporan',
     icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
-    items: [
-      {
-        component: CNavItem,
-        name: 'Laporan Bulanan/Tahunan',
-        to: '/notifications/alerts',
-      },
-      {
-        component: CNavItem,
-        name: 'Statistik Jenis Bantuan',
-        to: '/notifications/badges',
-      }
-    ],
   },
   {
     component: CNavTitle,
