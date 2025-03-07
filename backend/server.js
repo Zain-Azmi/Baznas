@@ -1,11 +1,12 @@
-const express = require("express");
-const mysql = require("mysql2");
-const cors = require("cors");
-require("dotenv").config();
+const express = require('express')
+const mysql = require('mysql2')
+const cors = require('cors')
+const jwt = require('jsonwebtoken')
+require('dotenv').config()
 
-const app = express();
-app.use(express.json());
-app.use(cors());
+const app = express()
+app.use(express.json())
+app.use(cors())
 
 // Koneksi ke database MySQL
 const db = mysql.createConnection({
@@ -13,12 +14,413 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-});
+})
 
 db.connect((err) => {
   if (err) {
-    console.error("Database connection failed:", err);
+    console.error('Database connection failed:', err)
   } else {
-    console.log("Connected to MySQL database");
+    console.log('Connected to MySQL database')
   }
-});
+})
+
+//API Untuk Login
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body
+
+  const query = 'SELECT * FROM users WHERE name = ? AND password_hash = ?'
+  db.query(query, [username, password], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: 'Database error', error: err })
+    }
+
+    if (results.length === 0) {
+      return res.status(401).json({ message: 'Username atau password salah' })
+    }
+
+    const user = results[0]
+
+    // Buat token JWT
+    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    })
+
+    res.json({ token, user: { id: user.id, username: user.username, name: user.name } })
+  })
+})
+// API Untuk Tabel data permohonan
+app.get('/api/tabelpermohonan', (req, res) => {
+  const query = `
+SELECT 
+    p.*, 
+    u.name AS nama_user, 
+    b.nama_bantuan AS jenis_bantuan, 
+    u.phone AS no_hp, 
+    DATE_FORMAT(p.tanggal_pengajuan, '%d-%m-%Y') AS tanggal_pengajuanformat
+FROM permohonan p
+JOIN users u ON p.user_id = u.id
+JOIN bantuan b ON p.bantuan_id = b.id;  `
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message })
+    }
+    res.json(results)
+  })
+})
+const port = process.env.NODE_PORT || 5000
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`)
+})
+
+app.get('/', (req, res) => {
+  res.send('Backend is running!')
+})
+
+app.put('/api/permohonan/:id', (req, res) => {
+  const { id } = req.params
+  const { jumlah, alasan } = req.body
+
+  // Ambil status permohonan saat ini dari database
+  const getStatusQuery = 'SELECT status FROM permohonan WHERE id = ?'
+
+  db.query(getStatusQuery, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Database error saat mengambil status' })
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Permohonan tidak ditemukan' })
+    }
+
+    const currentStatus = results[0].status
+    let updateQuery = ''
+    let updateParams = []
+
+    // Tentukan query berdasarkan status saat ini
+    switch (currentStatus) {
+      case 'baru':
+        updateQuery =
+          "UPDATE permohonan SET jumlah_bantuan = ?, penjelasanpermohonan = ?, status = 'pelaksana' WHERE id = ?"
+        updateParams = [jumlah, alasan, id]
+        break
+      case 'pelaksana':
+        updateQuery =
+          "UPDATE permohonan SET jumlah_bantuan = ?, alasanpelaksana = ?, status = 'bidang2' WHERE id = ?"
+        updateParams = [jumlah, alasan, id]
+        break
+      case 'bidang2':
+        updateQuery =
+          "UPDATE permohonan SET jumlah_bantuan = ?, alasanbidang2 = ?, status = 'bidang3' WHERE id = ?"
+        updateParams = [jumlah, alasan, id]
+        break
+      case 'bidang3':
+        updateQuery =
+          "UPDATE permohonan SET jumlah_bantuan = ?, alasanbidang3 = ?, status = 'baznas' WHERE id = ?"
+        updateParams = [jumlah, alasan, id]
+        break
+      case 'baznas':
+        updateQuery =
+          "UPDATE permohonan SET jumlah_bantuan = ?, alasanbaznas = ?, status = 'selesai' WHERE id = ?"
+        updateParams = [jumlah, alasan, id]
+        break
+      case 'revisi':
+        updateQuery = "UPDATE permohonan SET alasanrevisi = ?, status = 'revisi' WHERE id = ?"
+        updateParams = [alasan, id]
+        break
+      case 'ditolak':
+        updateQuery = "UPDATE permohonan SET alasan_penolakan = ?, status = 'ditolak' WHERE id = ?"
+        updateParams = [alasan, id]
+        break
+      default:
+        return res.status(400).json({ error: 'Status tidak valid atau sudah selesai' })
+    }
+
+    // Jalankan query update
+    db.query(updateQuery, updateParams, (err, result) => {
+      if (err) {
+        return res.status(500).json({ error: err.message })
+      }
+      res.json({ message: `Status berhasil diperbarui menjadi ${currentStatus}` })
+    })
+  })
+})
+
+app.get('/api/detailpermohonan/:id', (req, res) => {
+  const { id } = req.params
+  const query = `
+SELECT 
+    p.*, 
+    u.name AS nama_user, 
+    b.nama_bantuan AS jenis_bantuan, 
+    u.phone AS no_hp, 
+    DATE_FORMAT(p.tanggal_pengajuan, '%d-%m-%Y') AS tanggal_pengajuanformat
+FROM permohonan p
+JOIN users u ON p.user_id = u.id
+JOIN bantuan b ON p.bantuan_id = b.id
+WHERE p.id = ? ;
+`
+  queryParams = [id]
+
+  db.query(query, queryParams, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message })
+    }
+    res.json(results)
+  })
+})
+// Endpoint GET /bantuan untuk mengambil daftar bantuan
+app.get('/api/bantuan', (req, res) => {
+  const sql = 'SELECT * FROM bantuan'
+  db.query(sql, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message })
+    }
+    res.json(results)
+  })
+})
+// Endpoint untuk menambahkan bantuan baru
+app.post('/api/tambahbantuan', (req, res) => {
+  const { nama_bantuan, jenis_program, keterangan, persyaratan_umum, persyaratan_tambahan } =
+    req.body
+
+  const sqlBantuan =
+    'INSERT INTO bantuan (nama_bantuan, jenis_program, keterangan) VALUES (?, ?, ?)'
+  db.query(sqlBantuan, [nama_bantuan, jenis_program, keterangan], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message })
+
+    const bantuanId = result.insertId
+
+    // Menyimpan persyaratan umum
+    const sqlPersyaratanUmum =
+      'INSERT INTO persyaratan_umum (bantuan_id, nama_persyaratan) VALUES ?'
+    const valuesPersyaratanUmum = persyaratan_umum.map((item) => [bantuanId, item])
+    if (valuesPersyaratanUmum.length > 0) {
+      db.query(sqlPersyaratanUmum, [valuesPersyaratanUmum], (err) => {
+        if (err) console.error('Gagal menyimpan persyaratan umum:', err)
+      })
+    }
+
+    // Menyimpan persyaratan tambahan
+    const sqlPersyaratanTambahan =
+      'INSERT INTO persyaratan_tambahan (bantuan_id, nama_persyaratan) VALUES ?'
+    const valuesPersyaratanTambahan = persyaratan_tambahan.map((item) => [bantuanId, item])
+    if (valuesPersyaratanTambahan.length > 0) {
+      db.query(sqlPersyaratanTambahan, [valuesPersyaratanTambahan], (err) => {
+        if (err) console.error('Gagal menyimpan persyaratan tambahan:', err)
+      })
+    }
+
+    res.status(201).json({ message: 'Bantuan berhasil ditambahkan', bantuan_id: bantuanId })
+  })
+})
+// Endpoint DELETE untuk menghapus bantuan berdasarkan ID
+app.delete('/api/hapusbantuan/:id', (req, res) => {
+  const { id } = req.params
+  const sql = 'DELETE FROM bantuan WHERE id = ?'
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Error menghapus data:', err)
+      return res.status(500).json({ error: err.message })
+    }
+    // Jika data tidak ditemukan atau tidak terhapus, Anda bisa memeriksanya dengan result.affectedRows
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Bantuan tidak ditemukan' })
+    }
+    res.json({ message: 'Bantuan berhasil dihapus', bantuan_id: id })
+  })
+})
+// Endpoint untuk mengambil detail bantuan beserta persyaratan umum dan tambahan
+app.get('/api/detailbantuan/:id', (req, res) => {
+  const { id } = req.params
+
+  // Query untuk mengambil data bantuan
+  const sqlBantuan = 'SELECT * FROM bantuan WHERE id = ?'
+  db.query(sqlBantuan, [id], (err, resultsBantuan) => {
+    if (err) {
+      console.error('Error mengambil data bantuan:', err)
+      return res.status(500).json({ error: err.message })
+    }
+    if (resultsBantuan.length === 0) {
+      return res.status(404).json({ message: 'Bantuan tidak ditemukan' })
+    }
+    const bantuan = resultsBantuan[0]
+
+    // Query untuk mengambil persyaratan umum terkait bantuan
+    const sqlUmum = 'SELECT nama_persyaratan FROM persyaratan_umum WHERE bantuan_id = ?'
+    db.query(sqlUmum, [id], (err, resultsUmum) => {
+      if (err) {
+        console.error('Error mengambil persyaratan umum:', err)
+        return res.status(500).json({ error: err.message })
+      }
+
+      // Query untuk mengambil persyaratan tambahan terkait bantuan
+      const sqlTambahan = 'SELECT nama_persyaratan FROM persyaratan_tambahan WHERE bantuan_id = ?'
+      db.query(sqlTambahan, [id], (err, resultsTambahan) => {
+        if (err) {
+          console.error('Error mengambil persyaratan tambahan:', err)
+          return res.status(500).json({ error: err.message })
+        }
+
+        // Buat objek detail dengan menggabungkan data dari ketiga query
+        const detail = {
+          id: bantuan.id,
+          nama_bantuan: bantuan.nama_bantuan,
+          jenis_program: bantuan.jenis_program,
+          keterangan: bantuan.keterangan,
+          persyaratan_umum: resultsUmum.map((row) => row.nama_persyaratan),
+          persyaratan_tambahan: resultsTambahan.map((row) => row.nama_persyaratan),
+        }
+
+        res.json([detail]) // Mengembalikan data sebagai array
+      })
+    })
+  })
+})
+app.get('/api/detaileditbantuan/:id', (req, res) => {
+  const { id } = req.params
+
+  // Ambil data utama dari tabel bantuan
+  const sqlBantuan = 'SELECT * FROM bantuan WHERE id = ?'
+  db.query(sqlBantuan, [id], (err, resultsBantuan) => {
+    if (err) {
+      console.error('Error mengambil data bantuan:', err)
+      return res.status(500).json({ error: err.message })
+    }
+    if (resultsBantuan.length === 0) {
+      return res.status(404).json({ message: 'Bantuan tidak ditemukan' })
+    }
+    const bantuan = resultsBantuan[0]
+
+    // Ambil data persyaratan umum yang terkait
+    const sqlUmum = 'SELECT nama_persyaratan FROM persyaratan_umum WHERE bantuan_id = ?'
+    db.query(sqlUmum, [id], (err, resultsUmum) => {
+      if (err) {
+        console.error('Error mengambil persyaratan umum:', err)
+        return res.status(500).json({ error: err.message })
+      }
+
+      // Ambil data persyaratan tambahan yang terkait
+      const sqlTambahan = 'SELECT nama_persyaratan FROM persyaratan_tambahan WHERE bantuan_id = ?'
+      db.query(sqlTambahan, [id], (err, resultsTambahan) => {
+        if (err) {
+          console.error('Error mengambil persyaratan tambahan:', err)
+          return res.status(500).json({ error: err.message })
+        }
+
+        // Gabungkan data menjadi satu objek detail
+        const detail = {
+          id: bantuan.id,
+          nama_bantuan: bantuan.nama_bantuan,
+          jenis_program: bantuan.jenis_program,
+          keterangan: bantuan.keterangan,
+          persyaratan_umum: resultsUmum.map((row) => row.nama_persyaratan),
+          persyaratan_tambahan: resultsTambahan.map((row) => row.nama_persyaratan),
+        }
+
+        res.json([detail]) // Mengembalikan data sebagai array
+      })
+    })
+  })
+})
+app.put('/api/editbantuan/:id', (req, res) => {
+  const { id } = req.params
+  const {
+    nama_bantuan,
+    jenis_program,
+    keterangan,
+    persyaratan_umum, // Array of string, misalnya: ["Surat Permohonan", "Fotokopi KK", ...]
+    persyaratan_tambahan, // Array of string, misalnya: ["Fotokopi Kepemilikan Tanah", "Dokumentasi", ...]
+  } = req.body
+
+  // Mulai transaksi
+  db.beginTransaction((err) => {
+    if (err) return res.status(500).json({ error: err.message })
+
+    // 1. Update data utama di tabel bantuan
+    const sqlUpdate =
+      'UPDATE bantuan SET nama_bantuan = ?, jenis_program = ?, keterangan = ? WHERE id = ?'
+    db.query(sqlUpdate, [nama_bantuan, jenis_program, keterangan, id], (err, result) => {
+      if (err) {
+        return db.rollback(() => {
+          res.status(500).json({ error: err.message })
+        })
+      }
+
+      // 2. Hapus data persyaratan lama dari tabel persyaratan_umum
+      const sqlDeleteUmum = 'DELETE FROM persyaratan_umum WHERE bantuan_id = ?'
+      db.query(sqlDeleteUmum, [id], (err, result) => {
+        if (err) {
+          return db.rollback(() => {
+            res.status(500).json({ error: err.message })
+          })
+        }
+
+        // Hapus data persyaratan lama dari tabel persyaratan_tambahan
+        const sqlDeleteTambahan = 'DELETE FROM persyaratan_tambahan WHERE bantuan_id = ?'
+        db.query(sqlDeleteTambahan, [id], (err, result) => {
+          if (err) {
+            return db.rollback(() => {
+              res.status(500).json({ error: err.message })
+            })
+          }
+
+          // 3. Insert data baru persyaratan_umum (jika ada)
+          const insertUmum = () => {
+            if (persyaratan_umum && persyaratan_umum.length > 0) {
+              const valuesUmum = persyaratan_umum.map((item) => [id, item])
+              const sqlInsertUmum =
+                'INSERT INTO persyaratan_umum (bantuan_id, nama_persyaratan) VALUES ?'
+              return new Promise((resolve, reject) => {
+                db.query(sqlInsertUmum, [valuesUmum], (err, result) => {
+                  if (err) return reject(err)
+                  resolve()
+                })
+              })
+            } else {
+              return Promise.resolve()
+            }
+          }
+
+          // 4. Insert data baru persyaratan_tambahan (jika ada)
+          const insertTambahan = () => {
+            if (persyaratan_tambahan && persyaratan_tambahan.length > 0) {
+              const valuesTambahan = persyaratan_tambahan.map((item) => [id, item])
+              const sqlInsertTambahan =
+                'INSERT INTO persyaratan_tambahan (bantuan_id, nama_persyaratan) VALUES ?'
+              return new Promise((resolve, reject) => {
+                db.query(sqlInsertTambahan, [valuesTambahan], (err, result) => {
+                  if (err) return reject(err)
+                  resolve()
+                })
+              })
+            } else {
+              return Promise.resolve()
+            }
+          }
+
+          // Eksekusi kedua insert secara berurutan
+          insertUmum()
+            .then(() => insertTambahan())
+            .then(() => {
+              // Commit transaksi setelah semua operasi berhasil
+              db.commit((err) => {
+                if (err) {
+                  return db.rollback(() => {
+                    res.status(500).json({ error: err.message })
+                  })
+                }
+                res.json({ message: 'Bantuan berhasil diupdate', bantuan_id: id })
+              })
+            })
+            .catch((err) => {
+              db.rollback(() => {
+                res.status(500).json({ error: err.message })
+              })
+            })
+        })
+      })
+    })
+  })
+})
