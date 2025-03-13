@@ -24,12 +24,13 @@ db.connect((err) => {
   }
 })
 
-//API Untuk Login
+// API Untuk Login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body
 
-  const query = 'SELECT * FROM users WHERE name = ? AND password_hash = ?'
-  db.query(query, [username, password], (err, results) => {
+  // Cari user berdasarkan username
+  const query = 'SELECT * FROM users WHERE username = ?'
+  db.query(query, [username], (err, results) => {
     if (err) {
       return res.status(500).json({ message: 'Database error', error: err })
     }
@@ -40,14 +41,26 @@ app.post('/api/login', (req, res) => {
 
     const user = results[0]
 
-    // Buat token JWT
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    })
+    // Bandingkan password yang diinput dengan hash yang tersimpan
+    bcrypt.compare(password, user.password_hash, (compareErr, isMatch) => {
+      if (compareErr) {
+        return res.status(500).json({ message: 'Error comparing passwords', error: compareErr })
+      }
 
-    res.json({ token, user: { id: user.id, username: user.username, name: user.name } })
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Username atau password salah' })
+      }
+
+      // Buat token JWT jika password cocok
+      const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, {
+        expiresIn: '1h',
+      })
+
+      res.json({ token, user: { id: user.id, username: user.username, name: user.name } })
+    })
   })
 })
+
 // API Untuk Tabel data permohonan
 app.get('/api/tabelpermohonan', (req, res) => {
   const query = `
@@ -422,5 +435,151 @@ app.put('/api/editbantuan/:id', (req, res) => {
         })
       })
     })
+  })
+})
+app.get('/api/pengguna', (req, res) => {
+  const sql = 'SELECT id, name, role, phone FROM users'
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('Gagal mengambil data pengguna:', err)
+      return res.status(500).json({ message: 'Gagal mengambil data pengguna' })
+    }
+    res.json(results)
+  })
+})
+const bcrypt = require('bcrypt')
+const saltRounds = 10
+
+app.post('/api/tambahpengguna', (req, res) => {
+  const {
+    nama_pengguna,
+    role_pengguna,
+    nik_pemohon,
+    no_kk_pemohon,
+    username,
+    password,
+    tanggal_lahir,
+    hp,
+  } = req.body
+
+  // Hash password terlebih dahulu
+  bcrypt.hash(password, saltRounds, (hashErr, hash) => {
+    if (hashErr) {
+      console.error('Gagal meng-hash password:', hashErr)
+      return res.status(500).json({ message: 'Gagal meng-hash password' })
+    }
+
+    // Query SQL untuk insert data dengan password yang sudah di-hash
+    const sql = `INSERT INTO users (name, role, nik, nokk, username, password_hash, tanggallahir, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+    db.query(
+      sql,
+      [
+        nama_pengguna,
+        role_pengguna,
+        nik_pemohon || null,
+        no_kk_pemohon || null,
+        username,
+        hash,
+        tanggal_lahir || null,
+        hp,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error('Gagal menambahkan pengguna:', err)
+          return res.status(500).json({ message: 'Gagal menambahkan pengguna' })
+        }
+        res.json({ message: 'Pengguna berhasil ditambahkan', userId: result.insertId })
+      },
+    )
+  })
+})
+
+app.put('/api/editpengguna/:id', (req, res) => {
+  const { id } = req.params
+  const { name, role, username, password, phone, nik, nokk, tanggallahir } = req.body
+
+  // Fungsi untuk menjalankan query update
+  const runQuery = (passwordHash = null) => {
+    let sql, values
+    if (passwordHash) {
+      sql = `
+        UPDATE users 
+        SET name = ?, role = ?, username = ?, password_hash = ?, phone = ?, nik = ?, nokk = ?, tanggallahir = ?
+        WHERE id = ?
+      `
+      values = [
+        name,
+        role,
+        username,
+        passwordHash,
+        phone,
+        role === 'pemohon' ? nik : null,
+        role === 'pemohon' ? nokk : null,
+        role === 'pemohon' ? tanggallahir : null,
+        id,
+      ]
+    } else {
+      sql = `
+        UPDATE users 
+        SET name = ?, role = ?, username = ?, phone = ?, nik = ?, nokk = ?, tanggallahir = ?
+        WHERE id = ?
+      `
+      values = [
+        name,
+        role,
+        username,
+        phone,
+        role === 'pemohon' ? nik : null,
+        role === 'pemohon' ? nokk : null,
+        role === 'pemohon' ? tanggallahir : null,
+        id,
+      ]
+    }
+
+    db.query(sql, values, (err, result) => {
+      if (err) {
+        console.error('Gagal mengupdate pengguna:', err)
+        return res.status(500).json({ message: 'Gagal mengupdate pengguna' })
+      }
+      res.json({ message: 'Pengguna berhasil diupdate', affectedRows: result.affectedRows })
+    })
+  }
+
+  // Jika password diisi, hash terlebih dahulu
+  if (password) {
+    bcrypt.hash(password, saltRounds, (hashErr, hash) => {
+      if (hashErr) {
+        console.error('Gagal meng-hash password:', hashErr)
+        return res.status(500).json({ message: 'Gagal meng-hash password' })
+      }
+      runQuery(hash)
+    })
+  } else {
+    runQuery() // Update tanpa mengubah password
+  }
+})
+app.delete('/api/hapuspengguna/:id', (req, res) => {
+  const { id } = req.params
+  const sql = 'DELETE FROM users WHERE id = ?'
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Gagal menghapus pengguna:', err)
+      return res.status(500).json({ message: 'Gagal menghapus pengguna' })
+    }
+    res.json({ message: 'Pengguna berhasil dihapus' })
+  })
+})
+app.get('/api/detailpengguna/:id', (req, res) => {
+  const { id } = req.params
+  const sql = 'SELECT * FROM users WHERE id = ?'
+
+  db.query(sql, [id], (err, results) => {
+    if (err) {
+      console.error('Gagal mengambil detail pengguna:', err)
+      return res.status(500).json({ message: 'Gagal mengambil detail pengguna' })
+    }
+    res.json(results)
   })
 })

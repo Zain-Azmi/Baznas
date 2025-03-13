@@ -1,530 +1,441 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import {
   CCard,
   CCardBody,
+  CCardHeader,
   CTable,
-  CTableHead,
-  CTableRow,
   CTableBody,
-  CTableHeaderCell,
   CTableDataCell,
+  CTableHead,
+  CTableHeaderCell,
+  CTableRow,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
+  CFormInput,
 } from '@coreui/react'
-import { CTab, CTabContent, CTabList, CTabPanel, CTabs } from '@coreui/react'
 import { TombolSetuju, TombolTolak, TombolDetail } from './tombolaksi'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowUpShortWide, faArrowUpWideShort } from '@fortawesome/free-solid-svg-icons'
 
-const permohonan = () => {
-  const [data, setData] = useState([])
+const Permohonan = () => {
+  const [permohonanData, setPermohonanData] = useState([])
+  const [activeTab, setActiveTab] = useState('baru')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchData = () => {
-    fetch('http://localhost:5000/api/tabelpermohonan')
-      .then((response) => response.json())
-      .then((data) => {
-        const groupedData = data.reduce((acc, item) => {
-          const key = item.status.toLowerCase() // normalisasi jika perlu
-          if (!acc[key]) {
-            acc[key] = []
-          }
-          acc[key].push(item)
-          return acc
-        }, {})
-        setData(groupedData)
+    axios
+      .get('http://localhost:5000/api/tabelpermohonan')
+      .then((res) => {
+        setPermohonanData(res.data)
+        console.log('Data permohonan:', res.data)
       })
-      .catch((error) => console.error('Error fetching data:', error))
+      .catch((err) => console.error('Gagal mengambil data permohonan:', err))
   }
 
   useEffect(() => {
     fetchData()
   }, [])
 
-  const ambilulangdata = () => {
-    fetchData() // 🔹 Toggle refresh untuk memicu useEffect
+  const refreshData = () => {
+    fetchData()
   }
+
+  // Filter data berdasarkan status
+  const filterByStatus = (status) =>
+    permohonanData.filter((item) => item.status && item.status.toLowerCase() === status)
+
+  // Fungsi filter data sesuai field yang diinginkan
+  const filterData = (dataArray) => {
+    if (!searchTerm) return dataArray
+    const term = searchTerm.toLowerCase()
+    return dataArray.filter((item) => {
+      let fieldsToSearch = []
+      if (item.status.toLowerCase() === 'baru') {
+        fieldsToSearch = [
+          item.id,
+          item.nama_user,
+          item.jenis_bantuan,
+          item.no_hp,
+          item.tanggal_pengajuanformat,
+        ]
+      } else {
+        fieldsToSearch = [
+          item.id,
+          item.nama_user,
+          item.jenis_bantuan,
+          item.no_hp,
+          item.tanggal_pengajuanformat,
+          item.jumlah_bantuan,
+        ]
+      }
+
+      return fieldsToSearch
+        .filter((val) => typeof val === 'string' || typeof val === 'number')
+        .some((val) => val.toString().toLowerCase().includes(term))
+    })
+  }
+
+  // Fungsi formatRupiah untuk menampilkan jumlah bantuan dalam format mata uang Indonesia
   const formatRupiah = (angka) => {
-    if (!angka) return 'Rp 0' // Jika angka undefined/null, kembalikan Rp 0
+    if (!angka) return 'Rp 0'
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(angka)
   }
-  const [sortOrder, setSortOrder] = useState('asc') // Default sorting ascending
-
-  const handleSortById = (statusKey) => {
-    if (!data[statusKey]) return
-
-    const sorted = [...data[statusKey]].sort((a, b) =>
-      sortOrder === 'asc' ? a.id - b.id : b.id - a.id,
-    )
-
-    setData((prevData) => ({
-      ...prevData,
-      [statusKey]: sorted, // Update sorting hanya pada status yang diklik
-    }))
-
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc') // Toggle sorting order
-  }
 
   return (
-    <>
-      <CCard style={{ width: 'auto' }}>
-        <CTabs activeItemKey="baru">
-          <CTabList variant="tabs" layout="fill">
-            <CTab itemKey="baru">Permohonan Baru</CTab>
-            <CTab itemKey="pelaksana">Kepala Pelaksana</CTab>
-            <CTab itemKey="bidang2">Waka Bidang II</CTab>
-            <CTab itemKey="bidang3">Waka Bidang III</CTab>
-            <CTab itemKey="baznas">Ketua Baznas</CTab>
-            <CTab itemKey="selesai">Selesai</CTab>
-            <CTab itemKey="ditolak">Ditolak</CTab>
-          </CTabList>
-          <CCardBody>
-            <CTabContent>
-              <CTabPanel className="p-3" itemKey="baru">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('baru')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
+    <CCard>
+      <CCardHeader>{/* Tombol aksi global jika diperlukan */}</CCardHeader>
+      <CCardBody>
+        {/* Tab Navigation */}
+        <CNav variant="tabs">
+          <CNavItem>
+            <CNavLink active={activeTab === 'baru'} onClick={() => setActiveTab('baru')}>
+              Permohonan Baru
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'pelaksana'} onClick={() => setActiveTab('pelaksana')}>
+              Kepala Pelaksana
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'bidang2'} onClick={() => setActiveTab('bidang2')}>
+              Waka Bidang II
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'bidang3'} onClick={() => setActiveTab('bidang3')}>
+              Waka Bidang III
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'baznas'} onClick={() => setActiveTab('baznas')}>
+              Ketua Baznas
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'selesai'} onClick={() => setActiveTab('selesai')}>
+              Selesai
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'ditolak'} onClick={() => setActiveTab('ditolak')}>
+              Ditolak
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink active={activeTab === 'revisi'} onClick={() => setActiveTab('revisi')}>
+              Revisi
+            </CNavLink>
+          </CNavItem>
+        </CNav>
 
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+        <CCard className="mt-3">
+          <CCardHeader>
+            <div className="d-flex justify-content-end">
+              <CFormInput
+                type="text"
+                placeholder="Cari (semua data)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ maxWidth: '200px' }}
+              />
+            </div>
+          </CCardHeader>
+          <CTabContent>
+            {/* Tab Permohonan Baru */}
+            <CTabPane visible={activeTab === 'baru'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('baru')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolSetuju
+                          id={item.id}
+                          databaru={refreshData}
+                          jumlah={item.jumlah_bantuan}
+                        />{' '}
+                        <TombolTolak /> <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.baru && data.baru.length > 0 ? (
-                      data.baru.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolSetuju
-                              id={row.id}
-                              databaru={ambilulangdata}
-                              jumlah={row.jumlah_bantuan}
-                            />{' '}
-                            <TombolTolak /> <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan baru
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-
-              <CTabPanel className="p-3" itemKey="pelaksana">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('pelaksana')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Kepala Pelaksana */}
+            <CTabPane visible={activeTab === 'pelaksana'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('pelaksana')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolSetuju
+                          id={item.id}
+                          databaru={refreshData}
+                          jumlah={item.jumlah_bantuan}
+                        />{' '}
+                        <TombolTolak /> <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.pelaksana && data.pelaksana.length > 0 ? (
-                      data.pelaksana.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolSetuju
-                              id={row.id}
-                              databaru={ambilulangdata}
-                              jumlah={row.jumlah_bantuan}
-                            />{' '}
-                            <TombolTolak /> <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan baru
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-              <CTabPanel className="p-3" itemKey="bidang2">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('bidang2')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Waka Bidang II */}
+            <CTabPane visible={activeTab === 'bidang2'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('bidang2')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolSetuju
+                          id={item.id}
+                          databaru={refreshData}
+                          jumlah={item.jumlah_bantuan}
+                        />{' '}
+                        <TombolTolak /> <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.bidang2 && data.bidang2.length > 0 ? (
-                      data.bidang2.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolSetuju
-                              id={row.id}
-                              databaru={ambilulangdata}
-                              jumlah={row.jumlah_bantuan}
-                            />{' '}
-                            <TombolTolak /> <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan baru
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-              <CTabPanel className="p-3" itemKey="bidang3">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('bidang3')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Waka Bidang III */}
+            <CTabPane visible={activeTab === 'bidang3'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('bidang3')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolSetuju
+                          id={item.id}
+                          databaru={refreshData}
+                          jumlah={item.jumlah_bantuan}
+                        />{' '}
+                        <TombolTolak /> <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.bidang3 && data.bidang3.length > 0 ? (
-                      data.bidang3.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolSetuju
-                              id={row.id}
-                              databaru={ambilulangdata}
-                              jumlah={row.jumlah_bantuan}
-                            />{' '}
-                            <TombolTolak /> <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan baru
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-              <CTabPanel className="p-3" itemKey="baznas">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('baznas')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Ketua Baznas */}
+            <CTabPane visible={activeTab === 'baznas'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('baznas')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolSetuju
+                          id={item.id}
+                          databaru={refreshData}
+                          jumlah={item.jumlah_bantuan}
+                        />{' '}
+                        <TombolTolak /> <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.baznas && data.baznas.length > 0 ? (
-                      data.baznas.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolSetuju
-                              id={row.id}
-                              databaru={ambilulangdata}
-                              jumlah={row.jumlah_bantuan}
-                            />{' '}
-                            <TombolTolak /> <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan baru
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-              <CTabPanel className="p-3" itemKey="selesai">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('selesai')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Selesai */}
+            <CTabPane visible={activeTab === 'selesai'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('selesai')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.selesai && data.selesai.length > 0 ? (
-                      data.selesai.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan yang sudah selesai
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-              <CTabPanel className="p-3" itemKey="ditolak">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('ditolak')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Ditolak */}
+            <CTabPane visible={activeTab === 'ditolak'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('ditolak')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.ditolak && data.ditolak.length > 0 ? (
-                      data.ditolak.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
 
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan yang ditolak
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-              <CTabPanel className="p-3" itemKey="revisi">
-                <CTable responsive bordered borderColor="green">
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell
-                        onClick={() => handleSortById('revisi')}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        ID{' '}
-                        {sortOrder === 'asc' ? (
-                          <FontAwesomeIcon icon={faArrowUpWideShort} size="xs" />
-                        ) : (
-                          <FontAwesomeIcon icon={faArrowUpShortWide} size="xs" />
-                        )}
-                      </CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">Nama Pemohon</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jenis Bantuan</CTableHeaderCell>
-
-                      <CTableHeaderCell scope="col">No Hp</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Tanggal Pengajuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Jumlah Bantuan</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Aksi</CTableHeaderCell>
+            {/* Tab Revisi */}
+            <CTabPane visible={activeTab === 'revisi'}>
+              <CTable responsive bordered borderColor="green" className="mt-3">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>ID</CTableHeaderCell>
+                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>No Hp</CTableHeaderCell>
+                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
+                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell>Aksi</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {filterData(filterByStatus('revisi')).map((item) => (
+                    <CTableRow key={item.id}>
+                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
+                      <CTableDataCell>{item.nama_user}</CTableDataCell>
+                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
+                      <CTableDataCell>
+                        <TombolSetuju
+                          id={item.id}
+                          databaru={refreshData}
+                          jumlah={item.jumlah_bantuan}
+                        />{' '}
+                        <TombolTolak /> <TombolDetail id={item.id} />
+                      </CTableDataCell>
                     </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    {data.revisi && data.revisi.length > 0 ? (
-                      data.revisi.map((row, index) => (
-                        <CTableRow key={row.id}>
-                          <CTableHeaderCell scope="row">{row.id}</CTableHeaderCell>
-                          <CTableDataCell>{row.nama_user}</CTableDataCell>
-                          <CTableDataCell>{row.jenis_bantuan}</CTableDataCell>
-
-                          <CTableDataCell>{row.no_hp || '-'}</CTableDataCell>
-                          <CTableDataCell>{row.tanggal_pengajuanformat}</CTableDataCell>
-                          <CTableDataCell>{formatRupiah(row.jumlah_bantuan)}</CTableDataCell>
-                          <CTableDataCell>
-                            <TombolSetuju
-                              id={row.id}
-                              databaru={ambilulangdata}
-                              jumlah={row.jumlah_bantuan}
-                            />{' '}
-                            <TombolTolak /> <TombolDetail id={row.id} />
-                          </CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          Tidak ada permohonan yang perlu revisi
-                        </CTableDataCell>
-                      </CTableRow>
-                    )}
-                  </CTableBody>
-                </CTable>
-              </CTabPanel>
-            </CTabContent>
-          </CCardBody>
-        </CTabs>
-      </CCard>
-    </>
+                  ))}
+                </CTableBody>
+              </CTable>
+            </CTabPane>
+          </CTabContent>
+        </CCard>
+      </CCardBody>
+    </CCard>
   )
 }
 
-export default permohonan
+export default Permohonan
