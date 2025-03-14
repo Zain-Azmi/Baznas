@@ -1,11 +1,8 @@
 import React, { Suspense, useEffect } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter as Router, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
-
-// We use those styles to show code examples, you should remove them in your application.
 import './scss/examples.scss'
 
 // Containers
@@ -27,16 +24,14 @@ const App = () => {
     if (theme) {
       setColorMode(theme)
     }
-
     if (isColorModeSet()) {
       return
     }
-
     setColorMode(storedTheme)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <BrowserRouter basename="/BaznasCare">
+    <Router>
       <Suspense
         fallback={
           <div className="pt-3 text-center">
@@ -52,7 +47,7 @@ const App = () => {
           <Route path="*" element={<DefaultLayout />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </Router>
   )
 }
 
