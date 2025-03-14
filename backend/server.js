@@ -583,3 +583,246 @@ app.get('/api/detailpengguna/:id', (req, res) => {
     res.json(results)
   })
 })
+/* 
+  Endpoint /api/statistics 
+  Menghitung:
+  - userCount: jumlah pengguna pada bulan ini  
+  - userChange: persentase perubahan dibanding bulan sebelumnya  
+  - permohonanCount: jumlah permohonan pada bulan ini  
+  - permohonanChange: persentase perubahan dibanding bulan sebelumnya  
+  - jenisBantuanCount: jumlah jenis bantuan (distinct nama_bantuan) pada bulan ini  
+  - jenisBantuanChange: persentase perubahan dibanding bulan sebelumnya  
+*/
+app.get('/api/statistics', (req, res) => {
+  const currentMonth = new Date().getMonth() + 1 // getMonth() mulai dari 0
+  const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1
+
+  const userCurrentQuery = 'SELECT COUNT(*) AS count FROM users WHERE MONTH(created_at) = ?'
+  const userPreviousQuery = 'SELECT COUNT(*) AS count FROM users WHERE MONTH(created_at) = ?'
+
+  const permohonanCurrentQuery =
+    'SELECT COUNT(*) AS count FROM permohonan WHERE MONTH(tanggal_pengajuan) = ?'
+  const permohonanPreviousQuery =
+    'SELECT COUNT(*) AS count FROM permohonan WHERE MONTH(tanggal_pengajuan) = ?'
+
+  const jenisBantuanCurrentQuery =
+    'SELECT COUNT(DISTINCT nama_bantuan) AS count FROM bantuan WHERE MONTH(created_at) = ?'
+  const jenisBantuanPreviousQuery =
+    'SELECT COUNT(DISTINCT nama_bantuan) AS count FROM bantuan WHERE MONTH(created_at) = ?'
+
+  db.query(userCurrentQuery, [currentMonth], (err, userCurrentResult) => {
+    if (err) return res.status(500).json({ error: err.message })
+    db.query(userPreviousQuery, [previousMonth], (err, userPreviousResult) => {
+      if (err) return res.status(500).json({ error: err.message })
+      db.query(permohonanCurrentQuery, [currentMonth], (err, permohonanCurrentResult) => {
+        if (err) return res.status(500).json({ error: err.message })
+        db.query(permohonanPreviousQuery, [previousMonth], (err, permohonanPreviousResult) => {
+          if (err) return res.status(500).json({ error: err.message })
+          db.query(jenisBantuanCurrentQuery, [currentMonth], (err, jenisBantuanCurrentResult) => {
+            if (err) return res.status(500).json({ error: err.message })
+            db.query(
+              jenisBantuanPreviousQuery,
+              [previousMonth],
+              (err, jenisBantuanPreviousResult) => {
+                if (err) return res.status(500).json({ error: err.message })
+
+                const userCount = userCurrentResult[0].count
+                const permohonanCount = permohonanCurrentResult[0].count
+                const jenisBantuanCount = jenisBantuanCurrentResult[0].count
+
+                // Hitung persentase perubahan, jika nilai bulan sebelumnya 0 maka set ke 0
+                const userChange =
+                  userPreviousResult[0].count === 0
+                    ? 0
+                    : Number(
+                        (
+                          ((userCount - userPreviousResult[0].count) /
+                            userPreviousResult[0].count) *
+                          100
+                        ).toFixed(1),
+                      )
+                const permohonanChange =
+                  permohonanPreviousResult[0].count === 0
+                    ? 0
+                    : Number(
+                        (
+                          ((permohonanCount - permohonanPreviousResult[0].count) /
+                            permohonanPreviousResult[0].count) *
+                          100
+                        ).toFixed(1),
+                      )
+                const jenisBantuanChange =
+                  jenisBantuanPreviousResult[0].count === 0
+                    ? 0
+                    : Number(
+                        (
+                          ((jenisBantuanCount - jenisBantuanPreviousResult[0].count) /
+                            jenisBantuanPreviousResult[0].count) *
+                          100
+                        ).toFixed(1),
+                      )
+
+                res.json({
+                  userCount,
+                  userChange,
+                  permohonanCount,
+                  permohonanChange,
+                  jenisBantuanCount,
+                  jenisBantuanChange,
+                })
+              },
+            )
+          })
+        })
+      })
+    })
+  })
+})
+
+/* 
+  Endpoint /api/chartdata 
+  Mengembalikan data grafik per bulan untuk:
+  - users: jumlah pengguna per bulan
+  - permohonan: jumlah permohonan per bulan
+  - jenisBantuan: jumlah jenis bantuan (distinct) per bulan
+*/
+app.get('/api/chartdata', (req, res) => {
+  const usersQuery = `
+    SELECT MONTH(created_at) AS month, COUNT(*) AS count 
+    FROM users 
+    GROUP BY MONTH(created_at)
+  `
+  const permohonanQuery = `
+    SELECT MONTH(tanggal_pengajuan) AS month, COUNT(*) AS count 
+    FROM permohonan 
+    GROUP BY MONTH(tanggal_pengajuan)
+  `
+  const jenisBantuanQuery = `
+    SELECT MONTH(created_at) AS month, COUNT(DISTINCT nama_bantuan) AS count 
+    FROM bantuan 
+    GROUP BY MONTH(created_at)
+  `
+
+  db.query(usersQuery, (err, userResults) => {
+    if (err) return res.status(500).json({ error: err.message })
+    db.query(permohonanQuery, (err, permohonanResults) => {
+      if (err) return res.status(500).json({ error: err.message })
+      db.query(jenisBantuanQuery, (err, jenisResults) => {
+        if (err) return res.status(500).json({ error: err.message })
+
+        // Buat array 12 elemen untuk setiap kategori
+        let usersMonthly = new Array(12).fill(0)
+        userResults.forEach((row) => {
+          usersMonthly[row.month - 1] = row.count
+        })
+
+        let permohonanMonthly = new Array(12).fill(0)
+        permohonanResults.forEach((row) => {
+          permohonanMonthly[row.month - 1] = row.count
+        })
+
+        let jenisBantuanMonthly = new Array(12).fill(0)
+        jenisResults.forEach((row) => {
+          jenisBantuanMonthly[row.month - 1] = row.count
+        })
+
+        res.json({
+          users: usersMonthly,
+          permohonan: permohonanMonthly,
+          jenisBantuan: jenisBantuanMonthly,
+        })
+      })
+    })
+  })
+})
+// Endpoint untuk mengambil permohonan terbaru
+app.get('/api/permohonanTerbaru', (req, res) => {
+  // Query untuk mengambil data permohonan terbaru, misalnya 10 data terbaru
+  const sql = `
+    SELECT 
+      p.id,
+      u.name AS nama_user,
+      b.nama_bantuan AS jenis_bantuan,
+      u.phone AS no_hp,
+      DATE_FORMAT(p.tanggal_pengajuan, '%d-%m-%Y') AS tanggal_pengajuanformat
+    FROM permohonan p
+    JOIN users u ON p.user_id = u.id
+    JOIN bantuan b ON p.bantuan_id = b.id
+    WHERE p.status = 'baru' 
+    ORDER BY p.tanggal_pengajuan DESC 
+    LIMIT 10;
+  `
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error fetching permohonan terbaru:', err)
+      return res.status(500).json({ error: err.message })
+    }
+    res.json(results)
+  })
+})
+app.get('/api/permohonanDashboard', (req, res) => {
+  // Untuk contoh, gunakan periode bulan berjalan (bisa disesuaikan dengan query param)
+  const sqlChart = `
+    SELECT MONTH(tanggal_pengajuan) AS month, COUNT(*) AS count
+    FROM permohonan
+    GROUP BY MONTH(tanggal_pengajuan)
+  `
+
+  // Query summary: group by status untuk bulan berjalan
+  const sqlSummary = `
+    SELECT status, COUNT(*) AS count
+    FROM permohonan
+    WHERE MONTH(tanggal_pengajuan) = MONTH(CURRENT_DATE())
+    GROUP BY status
+  `
+
+  db.query(sqlChart, (err, chartResults) => {
+    if (err) return res.status(500).json({ error: err.message })
+
+    // Buat array 12 elemen, index 0 = Jan, 11 = Dec
+    let labels = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ]
+    let chartData = new Array(12).fill(0)
+    chartResults.forEach((row) => {
+      chartData[row.month - 1] = row.count
+    })
+
+    db.query(sqlSummary, (err, summaryResults) => {
+      if (err) return res.status(500).json({ error: err.message })
+
+      let total = 0,
+        selesai = 0,
+        ditolak = 0
+      summaryResults.forEach((row) => {
+        total += row.count
+        const status = row.status.toLowerCase()
+        if (status === 'selesai') {
+          selesai = row.count
+        } else if (status === 'ditolak') {
+          ditolak = row.count
+        }
+      })
+      let diproses = total - (selesai + ditolak)
+      // Jika perlu, bisa hitung persentase perubahan; di sini kita set change = 0
+      const change = 0
+
+      res.json({
+        labels,
+        data: chartData,
+        summary: { total, selesai, ditolak, diproses, change },
+      })
+    })
+  })
+})

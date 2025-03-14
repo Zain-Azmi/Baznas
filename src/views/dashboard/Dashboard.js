@@ -1,6 +1,5 @@
 import React from 'react'
-import classNames from 'classnames'
-
+import { useEffect, useState } from 'react'
 import {
   CAvatar,
   CButton,
@@ -20,153 +19,45 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cibGoogle,
-  cibFacebook,
-  cibLinkedin,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cibTwitter,
-  cilCloudDownload,
-  cilPeople,
-  cilUser,
-  cilUserFemale,
-} from '@coreui/icons'
-
-import avatar1 from 'src/assets/images/avatars/1.jpg'
-import avatar2 from 'src/assets/images/avatars/2.jpg'
-import avatar3 from 'src/assets/images/avatars/3.jpg'
-import avatar4 from 'src/assets/images/avatars/4.jpg'
-import avatar5 from 'src/assets/images/avatars/5.jpg'
-import avatar6 from 'src/assets/images/avatars/6.jpg'
-
+import axios from 'axios'
+import { cilInfo } from '@coreui/icons'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
-import MainChart from './MainChart'
+import { CChartLine } from '@coreui/react-chartjs'
+import { TombolDetail } from './tombolaksi.js'
 
 const Dashboard = () => {
-  const progressExample = [
-    { title: 'Visits', value: '29.703 Users', percent: 40, color: 'success' },
-    { title: 'Unique', value: '24.093 Users', percent: 20, color: 'info' },
-    { title: 'Pageviews', value: '78.706 Views', percent: 60, color: 'warning' },
-    { title: 'New Users', value: '22.123 Users', percent: 80, color: 'danger' },
-    { title: 'Bounce Rate', value: 'Average Rate', percent: 40.15, color: 'primary' },
-  ]
+  const [permohonanData, setPermohonanData] = useState([])
+  useEffect(() => {
+    axios
+      .get('http://localhost:5000/api/permohonanTerbaru')
+      .then((res) => {
+        setPermohonanData(res.data)
+      })
+      .catch((err) => console.error('Error fetching permohonan data:', err))
+  }, [])
+  const [period, setPeriod] = useState('Month')
+  const [chartData, setChartData] = useState({
+    labels: [],
+    data: [],
+  })
+  const [summary, setSummary] = useState({
+    total: 0,
+    selesai: 0,
+    ditolak: 0,
+    diproses: 0,
+    change: 0,
+  })
 
-  const progressGroupExample1 = [
-    { title: 'Monday', value1: 34, value2: 78 },
-    { title: 'Tuesday', value1: 56, value2: 94 },
-    { title: 'Wednesday', value1: 12, value2: 67 },
-    { title: 'Thursday', value1: 43, value2: 91 },
-    { title: 'Friday', value1: 22, value2: 73 },
-    { title: 'Saturday', value1: 53, value2: 82 },
-    { title: 'Sunday', value1: 9, value2: 69 },
-  ]
-
-  const progressGroupExample2 = [
-    { title: 'Male', icon: cilUser, value: 53 },
-    { title: 'Female', icon: cilUserFemale, value: 43 },
-  ]
-
-  const tableExample = [
-    {
-      avatar: { src: avatar1, status: 'success' },
-      user: {
-        name: 'Yiorgos Avraamu',
-        new: true,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'USA', flag: cifUs },
-      usage: {
-        value: 50,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'success',
-      },
-      payment: { name: 'Mastercard', icon: cibCcMastercard },
-      activity: '10 sec ago',
-    },
-    {
-      avatar: { src: avatar2, status: 'danger' },
-      user: {
-        name: 'Avram Tarasios',
-        new: false,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'Brazil', flag: cifBr },
-      usage: {
-        value: 22,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'info',
-      },
-      payment: { name: 'Visa', icon: cibCcVisa },
-      activity: '5 minutes ago',
-    },
-    {
-      avatar: { src: avatar3, status: 'warning' },
-      user: { name: 'Quintin Ed', new: true, registered: 'Jan 1, 2023' },
-      country: { name: 'India', flag: cifIn },
-      usage: {
-        value: 74,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'warning',
-      },
-      payment: { name: 'Stripe', icon: cibCcStripe },
-      activity: '1 hour ago',
-    },
-    {
-      avatar: { src: avatar4, status: 'secondary' },
-      user: { name: 'Enéas Kwadwo', new: true, registered: 'Jan 1, 2023' },
-      country: { name: 'France', flag: cifFr },
-      usage: {
-        value: 98,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'danger',
-      },
-      payment: { name: 'PayPal', icon: cibCcPaypal },
-      activity: 'Last month',
-    },
-    {
-      avatar: { src: avatar5, status: 'success' },
-      user: {
-        name: 'Agapetus Tadeáš',
-        new: true,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'Spain', flag: cifEs },
-      usage: {
-        value: 22,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'primary',
-      },
-      payment: { name: 'Google Wallet', icon: cibCcApplePay },
-      activity: 'Last week',
-    },
-    {
-      avatar: { src: avatar6, status: 'danger' },
-      user: {
-        name: 'Friderik Dávid',
-        new: true,
-        registered: 'Jan 1, 2023',
-      },
-      country: { name: 'Poland', flag: cifPl },
-      usage: {
-        value: 43,
-        period: 'Jun 11, 2023 - Jul 10, 2023',
-        color: 'success',
-      },
-      payment: { name: 'Amex', icon: cibCcAmex },
-      activity: 'Last week',
-    },
-  ]
+  useEffect(() => {
+    axios
+      .get(`http://localhost:5000/api/permohonanDashboard?period=${period}`)
+      .then((res) => {
+        const { labels, data, summary } = res.data
+        setChartData({ labels, data })
+        setSummary(summary)
+      })
+      .catch((err) => console.error('Gagal mengambil data dashboard:', err))
+  }, [period])
 
   return (
     <>
@@ -176,53 +67,67 @@ const Dashboard = () => {
         <CCardBody>
           <CRow>
             <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                Traffic
+              <h4 id="permohonan" className="card-title mb-0">
+                Permohonan Bantuan
               </h4>
-              <div className="small text-body-secondary">January - July 2023</div>
-            </CCol>
-            <CCol sm={7} className="d-none d-md-block">
-              <CButton color="primary" className="float-end">
-                <CIcon icon={cilCloudDownload} />
-              </CButton>
-              <CButtonGroup className="float-end me-3">
-                {['Day', 'Month', 'Year'].map((value) => (
-                  <CButton
-                    color="outline-secondary"
-                    key={value}
-                    className="mx-0"
-                    active={value === 'Month'}
-                  >
-                    {value}
-                  </CButton>
-                ))}
-              </CButtonGroup>
+              <div className="small text-body-secondary">Periode: {period}</div>
             </CCol>
           </CRow>
-          <MainChart />
+          <CChartLine
+            className="mt-4"
+            style={{ height: '300px' }}
+            data={{
+              labels: chartData.labels,
+              datasets: [
+                {
+                  label: 'Jumlah Permohonan',
+                  backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                  borderColor: 'rgba(54, 162, 235, 0.8)',
+                  pointBackgroundColor: 'rgba(54, 162, 235, 0.8)',
+                  data: chartData.data,
+                  fill: true,
+                },
+              ],
+            }}
+            options={{
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { grid: { display: true, color: '#f0f0f0' } },
+              },
+            }}
+          />
         </CCardBody>
         <CCardFooter>
-          <CRow
-            xs={{ cols: 1, gutter: 4 }}
-            sm={{ cols: 2 }}
-            lg={{ cols: 4 }}
-            xl={{ cols: 5 }}
-            className="mb-2 text-center"
-          >
-            {progressExample.map((item, index, items) => (
-              <CCol
-                className={classNames({
-                  'd-none d-xl-block': index + 1 === items.length,
-                })}
-                key={index}
-              >
-                <div className="text-body-secondary">{item.title}</div>
-                <div className="fw-semibold text-truncate">
-                  {item.value} ({item.percent}%)
-                </div>
-                <CProgress thin className="mt-2" color={item.color} value={item.percent} />
-              </CCol>
-            ))}
+          <CRow xs={{ cols: 1, gutter: 4 }} sm={{ cols: 3 }} className="mb-2 text-center">
+            <CCol>
+              <div className="text-body-secondary">Selesai</div>
+              <div className="fw-semibold">{summary.selesai}</div>
+              <CProgress
+                thin
+                color="success"
+                value={summary.total > 0 ? (summary.selesai / summary.total) * 100 : 0}
+              />
+            </CCol>
+            <CCol>
+              <div className="text-body-secondary">Ditolak</div>
+              <div className="fw-semibold">{summary.ditolak}</div>
+              <CProgress
+                thin
+                color="danger"
+                value={summary.total > 0 ? (summary.ditolak / summary.total) * 100 : 0}
+              />
+            </CCol>
+            <CCol>
+              <div className="text-body-secondary">Diproses</div>
+              <div className="fw-semibold">{summary.diproses}</div>
+              <CProgress
+                thin
+                color="primary"
+                value={summary.total > 0 ? (summary.diproses / summary.total) * 100 : 0}
+              />
+            </CCol>
           </CRow>
         </CCardFooter>
       </CCard>
@@ -234,54 +139,37 @@ const Dashboard = () => {
               <CTable align="middle" className="mb-0 border" hover responsive>
                 <CTableHead className="text-nowrap">
                   <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
+                    <CTableHeaderCell className="bg-body-tertiary text-center">ID</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">Nama Pemohon</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">Jenis Bantuan</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">No HP</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">
+                      Tanggal Pengajuan
                     </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">User</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Country
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Usage</CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Payment Method
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">Activity</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">Aksi</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {tableExample.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar size="md" src={item.avatar.src} status={item.avatar.status} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div>{item.user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? 'New' : 'Recurring'}</span> | Registered:{' '}
-                          {item.user.registered}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.country.flag} title={item.country.name} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.usage.value}%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">{item.usage.period}</small>
-                          </div>
-                        </div>
-                        <CProgress thin color={item.usage.color} value={item.usage.value} />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">Last login</div>
-                        <div className="fw-semibold text-nowrap">{item.activity}</div>
+                  {permohonanData.length > 0 ? (
+                    permohonanData.map((item) => (
+                      <CTableRow key={item.id}>
+                        <CTableDataCell className="text-center">{item.id}</CTableDataCell>
+                        <CTableDataCell>{item.nama_user}</CTableDataCell>
+                        <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
+                        <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
+                        <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
+                        <CTableDataCell>
+                          <TombolDetail id={item.id} />{' '}
+                        </CTableDataCell>
+                      </CTableRow>
+                    ))
+                  ) : (
+                    <CTableRow>
+                      <CTableDataCell colSpan="6" className="text-center">
+                        Tidak ada permohonan terbaru.
                       </CTableDataCell>
                     </CTableRow>
-                  ))}
+                  )}
                 </CTableBody>
               </CTable>
             </CCardBody>

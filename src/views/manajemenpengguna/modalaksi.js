@@ -33,11 +33,11 @@ export const ModalTambah = ({ ambildata }) => {
       const payload = {
         nama_pengguna: namaPengguna,
         role_pengguna: rolePengguna,
-        nik_pemohon: rolePengguna === 'pemohon' ? nikPemohon : '',
-        no_kk_pemohon: rolePengguna === 'pemohon' ? noKkPemohon : '',
+        nik_pemohon: rolePengguna === 'Pemohon' ? nikPemohon : '',
+        no_kk_pemohon: rolePengguna === 'Pemohon' ? noKkPemohon : '',
         username: username,
         password: password,
-        tanggal_lahir: rolePengguna === 'pemohon' ? tanggalLahir : '',
+        tanggal_lahir: rolePengguna === 'Pemohon' ? tanggalLahir : '',
         hp: hp,
       }
 
@@ -121,11 +121,11 @@ export const ModalTambah = ({ ambildata }) => {
               onChange={(e) => setRolePengguna(e.target.value)}
             >
               <option value="">Pilih Role Pengguna</option>
-              <option value="super_admin">Admin</option>
-              <option value="pemohon">Pemohon</option>
+              <option value="Admin">Admin</option>
+              <option value="Pemohon">Pemohon</option>
             </CFormSelect>
             <br />
-            {rolePengguna === 'pemohon' && (
+            {rolePengguna === 'Pemohon' && (
               <>
                 <label>NIK Pemohon</label>
                 <CFormInput
@@ -351,9 +351,9 @@ export const ModalEdit = ({ id, ambildata }) => {
         // Hanya update password jika diisi, jika tidak, backend bisa mengabaikannya
         password: password,
         phone: hp,
-        nik: rolePengguna === 'pemohon' ? nikPemohon : '',
-        nokk: rolePengguna === 'pemohon' ? noKkPemohon : '',
-        tanggallahir: rolePengguna === 'pemohon' ? tanggalLahir : '',
+        nik: rolePengguna === 'Pemohon' ? nikPemohon : '',
+        nokk: rolePengguna === 'Pemohon' ? noKkPemohon : '',
+        tanggallahir: rolePengguna === 'Pemohon' ? tanggalLahir : '',
       }
 
       const response = await axios.put(`http://localhost:5000/api/editpengguna/${id}`, payload)
