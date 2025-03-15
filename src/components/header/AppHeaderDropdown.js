@@ -2,6 +2,7 @@ import React from 'react'
 import {
   CAvatar,
   CBadge,
+  CButton,
   CDropdown,
   CDropdownDivider,
   CDropdownHeader,
@@ -25,6 +26,12 @@ import CIcon from '@coreui/icons-react'
 import avatar8 from './../../assets/images/avatars/8.jpg'
 
 const AppHeaderDropdown = () => {
+  const handleLogout = () => {
+    // Hapus token dari localStorage
+    localStorage.removeItem('token')
+    // Redirect ke halaman login
+    window.location.href = '/#/login'
+  }
   return (
     <CDropdown variant="nav-item">
       <CDropdownToggle placement="bottom-end" className="py-0 pe-0" caret={false}>
@@ -85,8 +92,10 @@ const AppHeaderDropdown = () => {
         </CDropdownItem>
         <CDropdownDivider />
         <CDropdownItem href="#">
-          <CIcon icon={cilLockLocked} className="me-2" />
-          Lock Account
+          <CButton color="secondary" onClick={handleLogout}>
+            <CIcon icon={cilLockLocked} className="me-2" />
+            Logout
+          </CButton>
         </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>
