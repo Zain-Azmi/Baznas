@@ -51,7 +51,7 @@ app.post('/api/login', (req, res) => {
         return res.status(401).json({ message: 'Username atau password salah' })
       }
 
-      // Buat token JWT jika password cocok
+      // Buat token JWT dengan masa berlaku 1 jam
       const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, {
         expiresIn: '1h',
       })
@@ -59,6 +59,32 @@ app.post('/api/login', (req, res) => {
       res.json({ token, user: { id: user.id, username: user.username, name: user.name } })
     })
   })
+})
+app.post('/api/refresh', (req, res) => {
+  const { token } = req.body
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token tidak disediakan' })
+  }
+
+  try {
+    // Decode token dengan mengabaikan masa expired untuk mendapatkan payload
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true })
+
+    // Opsional: Lakukan pengecekan tambahan, misalnya apakah user masih valid, dsb.
+
+    // Buat token baru dengan masa berlaku 1 jam
+    const newToken = jwt.sign(
+      { id: decoded.id, username: decoded.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' },
+    )
+
+    res.json({ newToken })
+  } catch (error) {
+    console.error('Gagal refresh token:', error)
+    res.status(401).json({ message: 'Token refresh tidak valid' })
+  }
 })
 
 // API Untuk Tabel data permohonan
