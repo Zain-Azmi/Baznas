@@ -16,6 +16,7 @@ import {
   CCardBody,
   CFormSelect,
 } from '@coreui/react'
+import Swal from 'sweetalert2'
 import { faTrash, faSquarePlus, faEye, faEdit } from '@fortawesome/free-solid-svg-icons'
 export const ModalTambah = ({ ambildata }) => {
   const [visible, setVisible] = useState(false)
@@ -50,7 +51,7 @@ export const ModalTambah = ({ ambildata }) => {
 
   const handleSubmit = async () => {
     try {
-      // Membuat array berdasarkan checkbox yang dicentang
+      // Membuat array berdasarkan checkbox yang dicentang untuk persyaratan umum
       const selectedPersyaratanUmum = Object.keys(persyaratanUmum)
         .filter((key) => persyaratanUmum[key])
         .map((key) => {
@@ -74,6 +75,7 @@ export const ModalTambah = ({ ambildata }) => {
           }
         })
 
+      // Membuat array berdasarkan checkbox yang dicentang untuk persyaratan tambahan
       const selectedPersyaratanTambahan = Object.keys(persyaratanTambahan)
         .filter((key) => persyaratanTambahan[key])
         .map((key) => {
@@ -115,19 +117,28 @@ export const ModalTambah = ({ ambildata }) => {
       // Mengirim data ke backend
       const response = await axios.post('http://localhost:5000/api/tambahbantuan', payload)
       console.log('Response:', response.data)
-      alert('Bantuan berhasil ditambahkan!')
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Bantuan berhasil ditambahkan!',
+      })
+
       // Reset form (opsional)
       setNamaBantuan('')
       setJenisProgram('')
       setKeteranganTambahan('')
+      // Panggil ambildata untuk refresh data di parent component
+      ambildata && ambildata()
       // Tutup modal
-      console.log('Tipe ambildata:', typeof ambildata)
-
-      ambildata()
       setVisible(false)
     } catch (error) {
       console.error('Gagal menambahkan bantuan:', error)
-      alert('Gagal menambahkan bantuan')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Gagal menambahkan bantuan',
+      })
     }
   }
 
@@ -384,19 +395,27 @@ export const ModalHapus = ({ bantuan, ambildata }) => {
   const handleDelete = async () => {
     try {
       await axios.delete(`http://localhost:5000/api/hapusbantuan/${bantuan.id}`)
-      alert('Bantuan berhasil dihapus!')
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Bantuan berhasil dihapus!',
+      })
       setVisible(false)
       ambildata() // Refresh data di parent
     } catch (error) {
       console.error('Gagal menghapus bantuan:', error)
-      alert('Gagal menghapus bantuan')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Gagal menghapus bantuan',
+      })
     }
   }
 
   return (
     <>
       <CButton color="danger" onClick={() => setVisible(true)}>
-        <FontAwesomeIcon icon={faTrash} />{' '}
+        <FontAwesomeIcon icon={faTrash} />
       </CButton>
       <CModal
         backdrop="static"
@@ -599,6 +618,11 @@ export const ModalEdit = ({ id, ambildata }) => {
         })
         .catch((err) => {
           console.error('Gagal mengambil detail bantuan:', err)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Gagal mengambil detail bantuan',
+          })
         })
     }
   }, [visible, id])
@@ -667,15 +691,23 @@ export const ModalEdit = ({ id, ambildata }) => {
         persyaratan_tambahan: selectedPersyaratanTambahan,
       }
 
-      // Mengirim data ke backend (asumsikan menggunakan metode PUT dan endpoint /api/bantuan/:id)
+      // Mengirim data ke backend
       const response = await axios.put(`http://localhost:5000/api/editbantuan/${id}`, payload)
       console.log('Response:', response.data)
-      alert('Bantuan berhasil diupdate!')
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Bantuan berhasil diupdate!',
+      })
       ambildata() // Refresh data dari parent
       setVisible(false)
     } catch (error) {
       console.error('Gagal mengupdate bantuan:', error)
-      alert('Gagal mengupdate bantuan')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Gagal mengupdate bantuan',
+      })
     }
   }
 

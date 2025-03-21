@@ -89,10 +89,9 @@ const Permohonan = () => {
 
   return (
     <CCard>
-      <CCardHeader>{/* Tombol aksi global jika diperlukan */}</CCardHeader>
       <CCardBody>
         {/* Tab Navigation */}
-        <CNav variant="tabs">
+        <CNav variant="tabs" layout="fill">
           <CNavItem>
             <CNavLink active={activeTab === 'baru'} onClick={() => setActiveTab('baru')}>
               Permohonan Baru
@@ -126,11 +125,6 @@ const Permohonan = () => {
           <CNavItem>
             <CNavLink active={activeTab === 'ditolak'} onClick={() => setActiveTab('ditolak')}>
               Ditolak
-            </CNavLink>
-          </CNavItem>
-          <CNavItem>
-            <CNavLink active={activeTab === 'revisi'} onClick={() => setActiveTab('revisi')}>
-              Revisi
             </CNavLink>
           </CNavItem>
         </CNav>
@@ -175,7 +169,8 @@ const Permohonan = () => {
                           databaru={refreshData}
                           jumlah={item.jumlah_bantuan}
                         />{' '}
-                        <TombolTolak /> <TombolDetail id={item.id} />
+                        <TombolTolak id={item.id} databaru={refreshData} />{' '}
+                        <TombolDetail id={item.id} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -212,7 +207,8 @@ const Permohonan = () => {
                           databaru={refreshData}
                           jumlah={item.jumlah_bantuan}
                         />{' '}
-                        <TombolTolak /> <TombolDetail id={item.id} />
+                        <TombolTolak id={item.id} databaru={refreshData} />{' '}
+                        <TombolDetail id={item.id} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -249,7 +245,8 @@ const Permohonan = () => {
                           databaru={refreshData}
                           jumlah={item.jumlah_bantuan}
                         />{' '}
-                        <TombolTolak /> <TombolDetail id={item.id} />
+                        <TombolTolak id={item.id} databaru={refreshData} />{' '}
+                        <TombolDetail id={item.id} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -286,7 +283,8 @@ const Permohonan = () => {
                           databaru={refreshData}
                           jumlah={item.jumlah_bantuan}
                         />{' '}
-                        <TombolTolak /> <TombolDetail id={item.id} />
+                        <TombolTolak id={item.id} databaru={refreshData} />{' '}
+                        <TombolDetail id={item.id} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -323,7 +321,8 @@ const Permohonan = () => {
                           databaru={refreshData}
                           jumlah={item.jumlah_bantuan}
                         />{' '}
-                        <TombolTolak /> <TombolDetail id={item.id} />
+                        <TombolTolak id={item.id} databaru={refreshData} />{' '}
+                        <TombolDetail id={item.id} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -388,43 +387,6 @@ const Permohonan = () => {
                       <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
                       <CTableDataCell>
                         <TombolDetail id={item.id} />
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
-            </CTabPane>
-
-            {/* Tab Revisi */}
-            <CTabPane visible={activeTab === 'revisi'}>
-              <CTable responsive bordered borderColor="green" className="mt-3">
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>ID</CTableHeaderCell>
-                    <CTableHeaderCell>Nama Pemohon</CTableHeaderCell>
-                    <CTableHeaderCell>Jenis Bantuan</CTableHeaderCell>
-                    <CTableHeaderCell>No Hp</CTableHeaderCell>
-                    <CTableHeaderCell>Tanggal Pengajuan</CTableHeaderCell>
-                    <CTableHeaderCell>Jumlah Bantuan</CTableHeaderCell>
-                    <CTableHeaderCell>Aksi</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {filterData(filterByStatus('revisi')).map((item) => (
-                    <CTableRow key={item.id}>
-                      <CTableHeaderCell>{item.id}</CTableHeaderCell>
-                      <CTableDataCell>{item.nama_user}</CTableDataCell>
-                      <CTableDataCell>{item.jenis_bantuan}</CTableDataCell>
-                      <CTableDataCell>{item.no_hp || '-'}</CTableDataCell>
-                      <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
-                      <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
-                      <CTableDataCell>
-                        <TombolSetuju
-                          id={item.id}
-                          databaru={refreshData}
-                          jumlah={item.jumlah_bantuan}
-                        />{' '}
-                        <TombolTolak /> <TombolDetail id={item.id} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}

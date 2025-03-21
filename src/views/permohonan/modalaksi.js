@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   CButton,
@@ -22,16 +23,15 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
   const formatRupiah = (value) => {
     const numberString = value.replace(/\D/g, '') // Hapus semua selain angka
     if (!numberString) return '' // Jika kosong, return kosong
-    const formatted = new Intl.NumberFormat('id-ID').format(numberString)
-    return `Rp. ${formatted}`
+    return `Rp. ${new Intl.NumberFormat('id-ID').format(numberString)}`
   }
 
   // Set nilai default jumlah saat modal dibuka
   useEffect(() => {
-    if (jumlahlama) {
+    if (visible && jumlahlama) {
       setJumlah(formatRupiah(jumlahlama.toString()))
     }
-  }, [jumlahlama, visible])
+  }, [visible]) // Gunakan dependensi `visible` saja agar tidak memicu pemanggilan berulang
 
   const handleChange = (e) => {
     const rawValue = e.target.value
@@ -39,6 +39,15 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
   }
 
   const handleSubmit = async () => {
+    if (!alasan.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Gagal!',
+        text: 'Alasan persetujuan harus diisi!',
+      })
+      return
+    }
+
     try {
       const jumlahValue = jumlah.replace(/\D/g, '') // Ambil angka saja
       const idValue = id.id ? id.id : id
@@ -52,19 +61,30 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
         alasan,
       })
 
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Permohonan telah disetujui.',
+      })
+
       if (datareload) {
-        datareload()
+        await datareload() // Pastikan reload selesai sebelum menutup modal
       }
+
       setVisible(false)
     } catch (error) {
       console.error('Gagal menambahkan bantuan:', error)
-      alert('Gagal menambahkan bantuan')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Terjadi kesalahan saat menyetujui permohonan.',
+      })
     }
   }
 
   return (
     <>
-      <CButton color="success" onClick={() => setVisible(!visible)}>
+      <CButton color="success" onClick={() => setVisible(true)}>
         <FontAwesomeIcon icon={faCheck} />
       </CButton>
       <CModal
@@ -85,7 +105,10 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
               value={alasan}
               rows={5}
               onChange={(e) => setAlasan(e.target.value)}
-            ></CFormTextarea>
+              placeholder="Masukkan alasan persetujuan..."
+            />
+            <br />
+            Jumlah Bantuan
             <CFormInput
               type="text"
               value={jumlah}
@@ -104,11 +127,61 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
   )
 }
 
-export const Modaltolak = () => {
+export const Modaltolak = ({ id, datareload }) => {
   const [visible, setVisible] = useState(false)
+  const [alasan, setAlasan] = useState('')
+
+  const handleTolak = async () => {
+    if (!alasan.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Alasan wajib diisi!',
+        text: 'Harap masukkan alasan penolakan sebelum melanjutkan.',
+      })
+      return
+    }
+
+    Swal.fire({
+      title: 'Konfirmasi Penolakan',
+      text: 'Apakah Anda yakin ingin menolak permohonan ini?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, Tolak',
+      cancelButtonText: 'Batal',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.put(`http://localhost:5000/api/tolakpermohonan/${id}`, {
+            alasan_penolakan: alasan,
+          })
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Permohonan Ditolak',
+            text: 'Permohonan berhasil ditolak.',
+          })
+
+          setVisible(false) // Tutup modal setelah sukses
+          if (datareload) {
+            await datareload() // Reload data di parent
+          }
+        } catch (error) {
+          console.error('Gagal menolak permohonan:', error)
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: 'Terjadi kesalahan saat menolak permohonan.',
+          })
+        }
+      }
+    })
+  }
+
   return (
     <>
-      <CButton color="danger" onClick={() => setVisible(!visible)}>
+      <CButton color="danger" onClick={() => setVisible(true)}>
         <FontAwesomeIcon icon={faXmark} />
       </CButton>
       <CModal
@@ -116,22 +189,30 @@ export const Modaltolak = () => {
         alignment="center"
         visible={visible}
         onClose={() => setVisible(false)}
-        aria-labelledby="VerticallyCenteredExample"
+        aria-labelledby="modal-tolak-permohonan"
       >
         <CModalHeader>
-          <CModalTitle id="VerticallyCenteredExample">Penolakan</CModalTitle>
+          <CModalTitle id="modal-tolak-permohonan">Penolakan Permohonan</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          Alasan Penolakan
           <CForm>
-            <CFormTextarea id="penolakan" rows={5}></CFormTextarea>
+            <label>Alasan Penolakan</label>
+            <CFormTextarea
+              id="penolakan"
+              rows={5}
+              placeholder="Masukkan alasan penolakan..."
+              value={alasan}
+              onChange={(e) => setAlasan(e.target.value)}
+            ></CFormTextarea>
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setVisible(false)}>
-            Close
+            Batal
           </CButton>
-          <CButton color="primary">Save changes</CButton>
+          <CButton color="danger" onClick={handleTolak}>
+            Tolak Permohonan
+          </CButton>
         </CModalFooter>
       </CModal>
     </>

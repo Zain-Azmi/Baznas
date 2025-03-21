@@ -826,3 +826,20 @@ app.get('/api/permohonanDashboard', (req, res) => {
     })
   })
 })
+app.put('/api/tolakpermohonan/:id', (req, res) => {
+  const { id } = req.params
+  const { alasan_penolakan } = req.body
+
+  const sql = `UPDATE permohonan 
+               SET status = 'ditolak', 
+                   alasan_penolakan = ? 
+               WHERE id = ?`
+
+  db.query(sql, [alasan_penolakan, id], (err, result) => {
+    if (err) {
+      console.error('Gagal menolak permohonan:', err)
+      return res.status(500).json({ message: 'Gagal menolak permohonan' })
+    }
+    res.json({ message: 'Permohonan berhasil ditolak' })
+  })
+})

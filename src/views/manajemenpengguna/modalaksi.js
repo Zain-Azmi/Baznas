@@ -16,6 +16,8 @@ import {
   CCardBody,
   CFormSelect,
 } from '@coreui/react'
+import Swal from 'sweetalert2'
+
 import { faTrash, faSquarePlus, faEye, faEdit } from '@fortawesome/free-solid-svg-icons'
 export const ModalTambah = ({ ambildata }) => {
   const [visible, setVisible] = useState(false)
@@ -43,8 +45,13 @@ export const ModalTambah = ({ ambildata }) => {
 
       const response = await axios.post('http://localhost:5000/api/tambahpengguna', payload)
       console.log('Response:', response.data)
-      alert('Pengguna berhasil ditambahkan!')
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Pengguna berhasil ditambahkan!',
+      })
 
+      // Reset form
       setNamaPengguna('')
       setRolePengguna('')
       setNikPemohon('')
@@ -53,11 +60,16 @@ export const ModalTambah = ({ ambildata }) => {
       setPassword('')
       setTanggalLahir('')
       setHp('')
-      ambildata()
+
+      ambildata && ambildata()
       setVisible(false)
     } catch (error) {
       console.error('Gagal menambahkan pengguna:', error)
-      alert('Gagal menambahkan pengguna')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Gagal menambahkan pengguna',
+      })
     }
   }
 
@@ -172,19 +184,27 @@ export const ModalHapus = ({ id, nama, ambildata }) => {
   const handleDelete = async () => {
     try {
       await axios.delete(`http://localhost:5000/api/hapuspengguna/${id}`)
-      alert('Pengguna berhasil dihapus!')
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Pengguna berhasil dihapus!',
+      })
       setVisible(false)
       ambildata() // Refresh data di parent
     } catch (error) {
       console.error('Gagal menghapus pengguna:', error)
-      alert('Gagal menghapus pengguna')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Gagal menghapus pengguna',
+      })
     }
   }
 
   return (
     <>
       <CButton color="danger" onClick={() => setVisible(true)}>
-        <FontAwesomeIcon icon={faTrash} />{' '}
+        <FontAwesomeIcon icon={faTrash} />
       </CButton>
       <CModal
         backdrop="static"
@@ -338,6 +358,11 @@ export const ModalEdit = ({ id, ambildata }) => {
         })
         .catch((err) => {
           console.error('Gagal mengambil detail pengguna:', err)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Gagal mengambil detail pengguna',
+          })
         })
     }
   }, [visible, id])
@@ -351,19 +376,27 @@ export const ModalEdit = ({ id, ambildata }) => {
         // Hanya update password jika diisi, jika tidak, backend bisa mengabaikannya
         password: password,
         phone: hp,
-        nik: rolePengguna === 'Pemohon' ? nikPemohon : '',
-        nokk: rolePengguna === 'Pemohon' ? noKkPemohon : '',
-        tanggallahir: rolePengguna === 'Pemohon' ? tanggalLahir : '',
+        nik: rolePengguna === 'pemohon' ? nikPemohon : '',
+        nokk: rolePengguna === 'pemohon' ? noKkPemohon : '',
+        tanggallahir: rolePengguna === 'pemohon' ? tanggalLahir : '',
       }
 
       const response = await axios.put(`http://localhost:5000/api/editpengguna/${id}`, payload)
       console.log('Response:', response.data)
-      alert('Pengguna berhasil diupdate!')
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Pengguna berhasil diupdate!',
+      })
       ambildata() // Refresh data dari parent
       setVisible(false)
     } catch (error) {
       console.error('Gagal mengupdate pengguna:', error)
-      alert('Gagal mengupdate pengguna')
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'Gagal mengupdate pengguna',
+      })
     }
   }
 

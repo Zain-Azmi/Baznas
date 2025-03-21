@@ -13,8 +13,9 @@ export const TombolSetuju = ({ id, databaru, jumlah }) => {
     />
   )
 }
-export const TombolTolak = () => {
-  return <Modaltolak />
+export const TombolTolak = ({ id, databaru }) => {
+  const [showModal, setShowModal] = useState(false)
+  return <Modaltolak id={id} datareload={databaru} closeModal={() => setShowModal(false)} />
 }
 export const TombolDetail = ({ id }) => {
   const [showModal, setShowModal] = useState(false)
