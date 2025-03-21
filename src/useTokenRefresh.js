@@ -15,11 +15,8 @@ const useTokenRefresh = (isIdle) => {
           .then((res) => {
             // Simpan token baru ke localStorage
             localStorage.setItem('token', res.data.newToken)
-            console.log('Token berhasil direfresh')
           })
-          .catch((error) => {
-            console.error('Gagal memperbarui token:', error)
-          })
+          .catch((error) => {})
       }
     }, 3600000)
 

@@ -7,7 +7,6 @@ const IdleDetector = ({ idleTime = 900000, onIdle, onActive }) => {
   const navigate = useNavigate()
 
   const resetTimer = () => {
-    console.log('Reset timer dipanggil') // Debug log
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
@@ -15,7 +14,6 @@ const IdleDetector = ({ idleTime = 900000, onIdle, onActive }) => {
       onActive()
     }
     timerRef.current = setTimeout(() => {
-      console.log('Timer timeout: idleTime tercapai') // Debug log
       if (onIdle) {
         onIdle()
       } else {
