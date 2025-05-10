@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Mar 15, 2025 at 08:07 PM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Host: 127.0.0.1
+-- Generation Time: May 10, 2025 at 12:18 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.1.25
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -28,12 +28,12 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `bantuan` (
-  `id` int NOT NULL,
+  `id` int(11) NOT NULL,
   `nama_bantuan` varchar(255) NOT NULL,
   `jenis_program` enum('Kemanusiaan','Kesehatan','Pendidikan','Ekonomi','Dakwah Dan Advokasi') NOT NULL,
-  `keterangan` text,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `keterangan` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `bantuan`
@@ -44,7 +44,43 @@ INSERT INTO `bantuan` (`id`, `nama_bantuan`, `jenis_program`, `keterangan`, `cre
 (2, 'DBU', 'Ekonomi', '', '2025-03-14 16:47:41'),
 (3, 'Kebencanaan', 'Kemanusiaan', '', '2025-03-14 16:47:41'),
 (4, 'Pendidikan', 'Pendidikan', '', '2025-03-14 16:47:41'),
-(5, 'Hutang Rumah Sakit', 'Kesehatan', '', '2025-03-14 16:47:41');
+(5, 'Hutang Rumah Sakit', 'Kesehatan', '', '2025-03-14 16:47:41'),
+(19, 'Lomba Ngaji', 'Dakwah Dan Advokasi', '', '2025-05-08 08:23:16');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pengajuan_bantuan`
+--
+
+CREATE TABLE `pengajuan_bantuan` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `full_name` varchar(100) NOT NULL,
+  `nik` char(16) NOT NULL,
+  `no_kk` char(16) NOT NULL,
+  `tempat_lahir` varchar(50) NOT NULL,
+  `tanggal_lahir` date NOT NULL,
+  `pekerjaan` varchar(100) NOT NULL,
+  `alamat` text NOT NULL,
+  `no_hp` varchar(20) NOT NULL,
+  `nama_bank` varchar(50) NOT NULL,
+  `no_rekening` varchar(50) NOT NULL,
+  `nama_file` varchar(255) NOT NULL,
+  `path_file` varchar(255) NOT NULL,
+  `belum_pernah_menerima` tinyint(1) DEFAULT 0,
+  `bantuan_id` int(11) NOT NULL,
+  `submitted_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `pengajuan_bantuan`
+--
+
+INSERT INTO `pengajuan_bantuan` (`id`, `user_id`, `full_name`, `nik`, `no_kk`, `tempat_lahir`, `tanggal_lahir`, `pekerjaan`, `alamat`, `no_hp`, `nama_bank`, `no_rekening`, `nama_file`, `path_file`, `belum_pernah_menerima`, `bantuan_id`, `submitted_at`) VALUES
+(1, 2, 'zain', '3216065811880012', '3216065811880012', 'BANDUNG', '2025-05-09', 'mahasiswa', 'Perm Pondok Pratama II Blok B-9 RT 001 RW 022 Kel. Lubuk Buaya Kec Koto Tangah', '083815264318', 'bsi', '11111111', 'UTS SPKC [6SI-D] - Kurnia Ningsih - 2217020116.pdf', '1746775966034_399937850.pdf', 1, 3, '2025-05-09 07:32:46'),
+(2, 2, 'zain', '1371106109780004', '1371106109780004', 'bandung', '2025-05-28', 'dasdas', 'Ampang KP. Jambak RT 001 RW 006 Kel. Ampang Kec. Kuranji', '082383807963', 'bsi', '11111111', 'UTS SPKC [6SI-D] - Kurnia Ningsih - 2217020116.pdf', '1746779529763_262042949.pdf', 1, 3, '2025-05-09 08:32:09'),
+(3, 2, 'Zain Azmi', '3271050212050007', '3216065811880012', 'Uin Ib', '2025-05-22', 'mahasiswa', 'Ampang KP. Jambak RT 001 RW 006 Kel. Ampang Kec. Kuranji', '082383807963', 'BSI', '11111111', 'UTS SPKC [6SI-D] - Kurnia Ningsih - 2217020116.pdf', '1746806516055_707528316.pdf', 1, 3, '2025-05-09 16:01:56');
 
 -- --------------------------------------------------------
 
@@ -53,61 +89,30 @@ INSERT INTO `bantuan` (`id`, `nama_bantuan`, `jenis_program`, `keterangan`, `cre
 --
 
 CREATE TABLE `permohonan` (
-  `id` int NOT NULL,
-  `user_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `bantuan_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `status` enum('baru','pelaksana','bidang2','bidang3','baznas','revisi','ditolak','selesai') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'baru',
-  `jumlah_bantuan` int NOT NULL DEFAULT '0',
-  `penjelasanpermohonan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `alasanpelaksana` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `alasanbidang2` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `alasanbidang3` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `alasanbaznas` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `alasanrevisi` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `alasan_penolakan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `tanggal_pengajuan` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `id` int(11) NOT NULL,
+  `pengajuan_id` int(11) NOT NULL,
+  `user_id` varchar(36) DEFAULT NULL,
+  `bantuan_id` varchar(36) DEFAULT NULL,
+  `status` enum('baru','pelaksana','bidang2','bidang3','baznas','revisi','ditolak','selesai') DEFAULT 'baru',
+  `jumlah_bantuan` int(11) NOT NULL DEFAULT 0,
+  `penjelasanpermohonan` text NOT NULL,
+  `alasanpelaksana` text NOT NULL,
+  `alasanbidang2` text NOT NULL,
+  `alasanbidang3` text NOT NULL,
+  `alasanbaznas` text NOT NULL,
+  `alasanrevisi` text NOT NULL,
+  `alasan_penolakan` text DEFAULT NULL,
+  `tanggal_pengajuan` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `permohonan`
 --
 
-INSERT INTO `permohonan` (`id`, `user_id`, `bantuan_id`, `status`, `jumlah_bantuan`, `penjelasanpermohonan`, `alasanpelaksana`, `alasanbidang2`, `alasanbidang3`, `alasanbaznas`, `alasanrevisi`, `alasan_penolakan`, `tanggal_pengajuan`) VALUES
-(1, '1', '1', 'baru', 1000000, 'Pengajuan bantuan untuk keperluan medis', '', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(2, '1', '1', 'baru', 500000, 'Permohonan bantuan biaya pendidikan', '', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(3, '1', '1', 'baru', 750000, 'Pengajuan bantuan usaha kecil', '', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(4, '1', '1', 'baru', 2000000, 'Permohonan bantuan renovasi rumah', '', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(5, '1', '1', 'baru', 1200000, 'Pengajuan bantuan sosial', '', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(6, '1', '1', 'pelaksana', 1000000, 'Pengajuan bantuan untuk keperluan medis', 'Diverifikasi oleh pelaksana', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(7, '1', '1', 'pelaksana', 500000, 'Permohonan bantuan biaya pendidikan', 'Diverifikasi oleh pelaksana', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(8, '1', '1', 'pelaksana', 750000, 'Pengajuan bantuan usaha kecil', 'Diverifikasi oleh pelaksana', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(9, '1', '1', 'pelaksana', 2000000, 'Permohonan bantuan renovasi rumah', 'Diverifikasi oleh pelaksana', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(10, '1', '1', 'pelaksana', 500000, 'berdasarkan rkat 123141 jumlah max rp 500.000', 'Diverifikasi oleh pelaksana', '', '', '', '', NULL, '2025-03-01 23:44:09'),
-(11, '1', '1', 'bidang2', 1000000, 'Pengajuan bantuan untuk keperluan medis', 'Diverifikasi oleh pelaksana', 'Diverifikasi oleh bidang2', '', '', '', NULL, '2025-03-01 23:44:09'),
-(12, '1', '1', 'bidang2', 500000, 'Permohonan bantuan biaya pendidikan', 'Diverifikasi oleh pelaksana', 'Diverifikasi oleh bidang2', '', '', '', NULL, '2025-03-01 23:44:09'),
-(13, '1', '1', 'bidang2', 750000, 'Pengajuan bantuan usaha kecil', 'Diverifikasi oleh pelaksana', 'Diverifikasi oleh bidang2', '', '', '', NULL, '2025-03-01 23:44:09'),
-(14, '1', '1', 'bidang2', 2000000, 'Permohonan bantuan renovasi rumah', 'Diverifikasi oleh pelaksana', 'Diverifikasi oleh bidang2', '', '', '', NULL, '2025-03-01 23:44:09'),
-(15, '1', '1', 'bidang2', 1200000, 'Pengajuan bantuan sosial', 'Diverifikasi oleh pelaksana', 'Diverifikasi oleh bidang2', '', '', '', NULL, '2025-03-01 23:44:09'),
-(16, '1', '1', 'bidang3', 1000000, 'Bantuan medis', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', '', '', NULL, '2025-03-02 00:34:22'),
-(17, '1', '1', 'bidang3', 500000, 'Bantuan pendidikan', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', '', '', NULL, '2025-03-02 00:34:22'),
-(18, '1', '1', 'bidang3', 750000, 'Bantuan usaha', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', '', '', NULL, '2025-03-02 00:34:22'),
-(19, '1', '1', 'bidang3', 2000000, 'Bantuan renovasi rumah', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', '', '', NULL, '2025-03-02 00:34:22'),
-(20, '1', '1', 'bidang3', 1200000, 'Bantuan sosial', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', '', '', NULL, '2025-03-02 00:34:22'),
-(21, '1', '1', 'baznas', 1000000, 'Bantuan medis', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', 'Diverifikasi baznas', '', NULL, '2025-03-02 00:34:22'),
-(22, '1', '1', 'baznas', 500000, 'Bantuan pendidikan', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', 'Diverifikasi baznas', '', NULL, '2025-03-02 00:34:22'),
-(23, '1', '1', 'baznas', 750000, 'Bantuan usaha', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', 'Diverifikasi baznas', '', NULL, '2025-03-02 00:34:22'),
-(24, '1', '1', 'baznas', 2000000, 'Bantuan renovasi rumah', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', 'Diverifikasi baznas', '', NULL, '2025-03-02 00:34:22'),
-(25, '1', '1', 'selesai', 1200000, 'Bantuan sosial', 'Diverifikasi pelaksana', 'Diverifikasi bidang2', 'Diverifikasi bidang3', 'bantuan disetujui', '', NULL, '2025-03-02 00:34:22'),
-(26, '1', '1', 'revisi', 1000000, 'Bantuan medis', '', '', '', '', 'Dokumen tidak lengkap', NULL, '2025-03-02 00:34:22'),
-(27, '1', '1', 'revisi', 500000, 'Bantuan pendidikan', '', '', '', '', 'Formulir belum ditandatangani', NULL, '2025-03-02 00:34:22'),
-(28, '1', '1', 'revisi', 750000, 'Bantuan usaha', '', '', '', '', 'Bukti usaha kurang jelas', NULL, '2025-03-02 00:34:22'),
-(29, '1', '1', 'revisi', 2000000, 'Bantuan renovasi rumah', '', '', '', '', 'Foto rumah tidak sesuai', NULL, '2025-03-02 00:34:22'),
-(30, '1', '1', 'revisi', 1200000, 'Bantuan sosial', '', '', '', '', 'KTP belum valid', NULL, '2025-03-02 00:34:22'),
-(31, '1', '1', 'ditolak', 1000000, 'Bantuan medis', '', '', '', '', '', 'Tidak memenuhi syarat', '2025-03-02 00:34:22'),
-(32, '1', '1', 'ditolak', 500000, 'Bantuan pendidikan', '', '', '', '', '', 'Penghasilan melebihi batas', '2025-03-02 00:34:22'),
-(33, '1', '1', 'ditolak', 750000, 'Bantuan usaha', '', '', '', '', '', 'Kurang bukti usaha', '2025-03-02 00:34:22'),
-(34, '1', '1', 'ditolak', 2000000, 'Bantuan renovasi rumah', '', '', '', '', '', 'Dokumen tidak valid', '2025-03-02 00:34:22'),
-(35, '1', '1', 'ditolak', 1200000, 'Bantuan sosial', '', '', '', '', '', 'Sudah pernah menerima bantuan', '2025-03-02 00:34:22');
+INSERT INTO `permohonan` (`id`, `pengajuan_id`, `user_id`, `bantuan_id`, `status`, `jumlah_bantuan`, `penjelasanpermohonan`, `alasanpelaksana`, `alasanbidang2`, `alasanbidang3`, `alasanbaznas`, `alasanrevisi`, `alasan_penolakan`, `tanggal_pengajuan`) VALUES
+(36, 1, '2', '3', 'baru', 0, '', '', '', '', '', '', NULL, '2025-05-09 14:32:46'),
+(37, 2, '2', '3', 'baru', 0, '', '', '', '', '', '', NULL, '2025-05-09 15:32:09'),
+(38, 3, '2', '3', 'baru', 0, '', '', '', '', '', '', NULL, '2025-05-09 23:01:56');
 
 -- --------------------------------------------------------
 
@@ -116,10 +121,10 @@ INSERT INTO `permohonan` (`id`, `user_id`, `bantuan_id`, `status`, `jumlah_bantu
 --
 
 CREATE TABLE `persyaratan_tambahan` (
-  `id` int NOT NULL,
-  `bantuan_id` int DEFAULT NULL,
+  `id` int(11) NOT NULL,
+  `bantuan_id` int(11) DEFAULT NULL,
   `nama_persyaratan` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `persyaratan_tambahan`
@@ -133,7 +138,9 @@ INSERT INTO `persyaratan_tambahan` (`id`, `bantuan_id`, `nama_persyaratan`) VALU
 (6, 5, 'Surat Keterangan Sakit'),
 (7, 5, 'Kwitansi Berobat'),
 (8, 5, 'Rincian Hutang'),
-(24, 1, 'Dokumentasi');
+(24, 1, 'Dokumentasi'),
+(25, 19, 'Rincian Anggaran Biaya'),
+(26, 19, 'Pernyataan Siap Memberikan Laporan');
 
 -- --------------------------------------------------------
 
@@ -142,10 +149,10 @@ INSERT INTO `persyaratan_tambahan` (`id`, `bantuan_id`, `nama_persyaratan`) VALU
 --
 
 CREATE TABLE `persyaratan_umum` (
-  `id` int NOT NULL,
-  `bantuan_id` int DEFAULT NULL,
+  `id` int(11) NOT NULL,
+  `bantuan_id` int(11) DEFAULT NULL,
   `nama_persyaratan` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `persyaratan_umum`
@@ -186,7 +193,14 @@ INSERT INTO `persyaratan_umum` (`id`, `bantuan_id`, `nama_persyaratan`) VALUES
 (158, 1, 'Surat Keterangan Tidak Mampu (asli)'),
 (159, 1, 'Surat Keterangan Jamaah Masjid (asli)'),
 (160, 1, 'Foto / Dokumentasi Rumah'),
-(161, 1, 'Denah Rumah');
+(161, 1, 'Denah Rumah'),
+(162, 19, 'Surat Permohonan'),
+(163, 19, 'Fotokopi KK'),
+(164, 19, 'Fotokopi KTP'),
+(165, 19, 'Surat Keterangan Tidak Mampu (asli)'),
+(166, 19, 'Surat Keterangan Jamaah Masjid (asli)'),
+(167, 19, 'Foto / Dokumentasi Rumah'),
+(168, 19, 'Denah Rumah');
 
 -- --------------------------------------------------------
 
@@ -195,29 +209,27 @@ INSERT INTO `persyaratan_umum` (`id`, `bantuan_id`, `nama_persyaratan`) VALUES
 --
 
 CREATE TABLE `users` (
-  `id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `nik` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nokk` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tanggallahir` date DEFAULT NULL,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `username` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `password_hash` text COLLATE utf8mb4_general_ci NOT NULL,
-  `role` enum('Admin','Pemohon','coba') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `phone` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `username` varchar(255) NOT NULL,
+  `password_hash` text NOT NULL,
+  `role` enum('Admin','Pemohon','coba') NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `nik`, `nokk`, `tanggallahir`, `email`, `username`, `password_hash`, `role`, `phone`, `created_at`, `updated_at`) VALUES
-(1, 'zain azmi', NULL, NULL, NULL, 'zain', 'zain', '$2b$10$Gu0CHjgW.VQ4tXqS.Et/3Oq2LAYfIeIQz81qJYvQxwteneRZCUM6i', 'Admin', '081234567890', '2025-02-17 03:10:50', '2025-03-11 10:45:57'),
-(2, 'Baznas', NULL, NULL, NULL, NULL, 'Baznas', '$2b$10$PY7rs1u5FMvJshSrYQOhjO9Cf7J99qg.xai2hk1nF46TIFo398Fdy', 'Admin', '083172228453', '2025-03-07 04:48:59', '2025-03-11 10:45:57'),
-(4, 'Zaky', NULL, NULL, NULL, NULL, 'zaky', '$2b$10$AkcuBp4uL8b7WQG5ILk7ZOyEyNSRU/yBGoiCMa9iOFHfGloAkd9xi', 'Pemohon', '123443211234', '2025-03-07 07:57:16', '2025-03-11 10:48:55'),
-(6, 'pemohon1', NULL, NULL, NULL, NULL, 'pemohon', '$2b$10$gGoWC1yyiB5FyYU9zn2rFu6bRt4LzuYzpg6IILyj3jAfu0TB8B7xm', 'Admin', '123443211234', '2025-03-14 09:15:13', '2025-03-14 09:15:13');
+INSERT INTO `users` (`id`, `name`, `email`, `username`, `password_hash`, `role`, `phone`, `created_at`, `updated_at`) VALUES
+(1, 'zain azmi', 'zain', 'zain', '$2b$10$Gu0CHjgW.VQ4tXqS.Et/3Oq2LAYfIeIQz81qJYvQxwteneRZCUM6i', 'Admin', '081234567890', '2025-02-17 03:10:50', '2025-03-11 10:45:57'),
+(2, 'Baznas padang', 'baznas@gmail.com', 'Baznas', '$2b$10$QJoglsj3OIlXnD2qw8i7n.wSLkjZ6/OKWSwIh.vcc9ePGzMkvCsE2', 'Admin', '111111111111', '2025-03-07 04:48:59', '2025-05-09 16:15:56'),
+(4, 'Zaky', NULL, 'zaky', '$2b$10$AkcuBp4uL8b7WQG5ILk7ZOyEyNSRU/yBGoiCMa9iOFHfGloAkd9xi', 'Pemohon', '123443211234', '2025-03-07 07:57:16', '2025-03-11 10:48:55'),
+(6, 'pemohon1', NULL, 'pemohon', '$2b$10$gGoWC1yyiB5FyYU9zn2rFu6bRt4LzuYzpg6IILyj3jAfu0TB8B7xm', 'Admin', '123443211234', '2025-03-14 09:15:13', '2025-03-14 09:15:13'),
+(7, 'Uin Ib', 'uin@gmail.com', '', '$2b$10$1VEcAObsbGKLVSA/sLcpB.NkZNHOEOJqdv7ZD/XHRB7988Qf7Cs/S', 'Admin', '123123123123', '2025-05-09 21:22:47', '2025-05-09 21:22:47');
 
 --
 -- Indexes for dumped tables
@@ -227,6 +239,12 @@ INSERT INTO `users` (`id`, `name`, `nik`, `nokk`, `tanggallahir`, `email`, `user
 -- Indexes for table `bantuan`
 --
 ALTER TABLE `bantuan`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `pengajuan_bantuan`
+--
+ALTER TABLE `pengajuan_bantuan`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -264,31 +282,37 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `bantuan`
 --
 ALTER TABLE `bantuan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `pengajuan_bantuan`
+--
+ALTER TABLE `pengajuan_bantuan`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `permohonan`
 --
 ALTER TABLE `permohonan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `persyaratan_tambahan`
 --
 ALTER TABLE `persyaratan_tambahan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `persyaratan_umum`
 --
 ALTER TABLE `persyaratan_umum`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=162;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=169;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Constraints for dumped tables
