@@ -12,6 +12,8 @@ import {
   CForm,
   CFormTextarea,
   CFormInput,
+  CRow,
+  CCol,
 } from '@coreui/react'
 import { faXmark, faCheck, faEye } from '@fortawesome/free-solid-svg-icons'
 export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
@@ -21,17 +23,16 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
 
   // Fungsi format rupiah
   const formatRupiah = (value) => {
-    const numberString = value.replace(/\D/g, '') // Hapus semua selain angka
-    if (!numberString) return '' // Jika kosong, return kosong
+    const numberString = value.replace(/\D/g, '') 
+    if (!numberString) return ''
     return `Rp. ${new Intl.NumberFormat('id-ID').format(numberString)}`
   }
 
-  // Set nilai default jumlah saat modal dibuka
   useEffect(() => {
     if (visible && jumlahlama) {
       setJumlah(formatRupiah(jumlahlama.toString()))
     }
-  }, [visible]) // Gunakan dependensi `visible` saja agar tidak memicu pemanggilan berulang
+  }, [visible]) 
 
   const handleChange = (e) => {
     const rawValue = e.target.value
@@ -49,7 +50,7 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
     }
 
     try {
-      const jumlahValue = jumlah.replace(/\D/g, '') // Ambil angka saja
+      const jumlahValue = jumlah.replace(/\D/g, '')
       const idValue = id.id ? id.id : id
 
       console.log('Jumlah yang dikirim:', jumlahValue)
@@ -68,7 +69,7 @@ export const Modalsetuju = ({ id, datareload, jumlahlama }) => {
       })
 
       if (datareload) {
-        await datareload() // Pastikan reload selesai sebelum menutup modal
+        await datareload()
       }
 
       setVisible(false)
@@ -219,150 +220,269 @@ export const Modaltolak = ({ id, datareload }) => {
   )
 }
 
-export const ModalDetail = ({ id }) => {
-  const [visible, setVisible] = useState(false)
-  const [detail, setDetail] = useState(null)
 
-  // Fetch data detail berdasarkan id permohonan
+export const ModalDetail = ({ id }) => {
+  const [visible, setVisible] = useState(false);
+  const [detail, setDetail] = useState(null);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     if (visible && id) {
       axios
         .get(`http://localhost:5000/api/detailpermohonan/${id}`)
-        .then((response) => {
-          console.log('Data detail diterima:', response.data)
-          setDetail(response.data[0])
-        })
-        .catch((err) => {
-          setError('Gagal mengambil data detail')
-        })
+        .then((response) => setDetail(response.data[0]))
+        .catch(() => setError('Gagal mengambil data detail'));
     }
-  }, [visible, id])
+  }, [visible, id]);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    const ye = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${ye}-${mo}-${da}`;
+  };
+
+  // Determine modal size: md for new ('baru'), lg for others
+  const modalSize = detail && detail.status === 'baru' ? 'md' : 'lg';
 
   return (
     <>
       <CButton color="info" onClick={() => setVisible(!visible)}>
         <FontAwesomeIcon icon={faEye} />
       </CButton>
+
       <CModal
         backdrop="static"
         alignment="center"
         visible={visible}
         onClose={() => setVisible(false)}
+        size={modalSize}
         aria-labelledby="modal-detail-title"
       >
         <CModalHeader>
           <CModalTitle id="modal-detail-title">Detail Permohonan</CModalTitle>
         </CModalHeader>
+
         <CModalBody>
+          {error && <div className="text-danger mb-3">{error}</div>}
           {detail && (
             <CForm>
-              <p>
-                <strong>Penjelasan Permohonan:</strong>
-              </p>
-              <CFormTextarea
-                readOnly
-                value={detail.penjelasanpermohonan || 'Tidak ada Penjelasan Permohonn'}
-                rows={3}
-              />
-              {detail.status === 'bidang2' && (
-                <>
-                  <p>
-                    <strong>Alasan Wakil Ketua Pelaksana:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanpelaksana || 'Tidak ada alasan dari Ketua Pelaksana'}
-                    rows={3}
-                  />
-                </>
-              )}
-              {detail.status === 'bidang3' && (
-                <>
-                  <p>
-                    <strong>Alasan Wakil Ketua Pelaksana:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanpelaksana || 'Tidak ada alasan dari Ketua Pelaksana'}
-                    rows={3}
-                  />
-                  <p>
-                    <strong>Alasan Wakil Ketua Bidang 2:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanbidang2 || 'Tidak ada alasan dari Wakil Ketua Bidang 2'}
-                    rows={3}
-                  />
-                </>
-              )}
-              {detail.status === 'baznas' && (
-                <>
-                  <p>
-                    <strong>Alasan Wakil Ketua Pelaksana:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanpelaksana || 'Tidak ada alasan dari Ketua Pelaksana'}
-                    rows={3}
-                  />
-                  <p>
-                    <strong>Alasan Wakil Ketua Bidang 2:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanbidang2 || 'Tidak ada alasan dari Wakil Ketua Bidang 2'}
-                    rows={3}
-                  />
-                  <p>
-                    <strong>Alasan Wakil Ketua Bidang 3:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanbidang3 || 'Tidak ada alasan dari Wakil Ketua Bidang 3'}
-                    rows={3}
-                  />
-                </>
-              )}
-              {detail.status === 'selesai' && (
-                <>
-                  <p>
-                    <strong>Alasan Wakil Ketua Pelaksana:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanpelaksana || 'Tidak ada alasan dari Ketua Pelaksana'}
-                    rows={3}
-                  />
-                  <p>
-                    <strong>Alasan Wakil Ketua Bidang 2:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanbidang2 || 'Tidak ada alasan dari Wakil Ketua Bidang 2'}
-                    rows={3}
-                  />
-                  <p>
-                    <strong>Alasan Wakil Ketua Bidang 3:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanbidang3 || 'Tidak ada alasan dari Wakil Ketua Bidang 3'}
-                    rows={3}
-                  />
-                  <p>
-                    <strong>Alasan Ketua Baznas:</strong>
-                  </p>
-                  <CFormTextarea
-                    readOnly
-                    value={detail.alasanbaznas || 'Tidak ada alasan dari Ketua Baznas'}
-                    rows={3}
-                  />
-                </>
-              )}
+              <CRow>
+                {detail.status === 'baru' ? (
+                  <CCol xs={12}>
+                    {/* Single-column layout for new submissions */}
+                    <div className="mb-3">
+                      <strong>Nama Pemohon:</strong>
+                      <div>{detail.full_name || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>NIK:</strong>
+                      <div>{detail.nik || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>No KK:</strong>
+                      <div>{detail.no_kk || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Tempat Lahir:</strong>
+                      <div>{detail.tempat_lahir || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Tanggal Lahir:</strong>
+                      <div>{formatDate(detail.tanggal_lahir)}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Pekerjaan:</strong>
+                      <div>{detail.pekerjaan || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Alamat:</strong>
+                      <div>{detail.alamat || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>No HP:</strong>
+                      <div>{detail.no_hp || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>Nama Bank:</strong>
+                      <div>{detail.nama_bank || '-'}</div>
+                    </div>
+                    <div className="mb-3">
+                      <strong>No Rekening:</strong>
+                      <div>{detail.no_rekening || '-'}</div>
+                    </div>
+                  </CCol>
+                ) : (
+                  <>
+                    <CCol xs={12} md={6} className="pe-md-4">
+                      {/* Left column for processed submissions */}
+                      <div className="mb-3">
+                        <strong>Nama Pemohon:</strong>
+                        <div>{detail.full_name || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>NIK:</strong>
+                        <div>{detail.nik || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>No KK:</strong>
+                        <div>{detail.no_kk || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>Tempat Lahir:</strong>
+                        <div>{detail.tempat_lahir || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>Tanggal Lahir:</strong>
+                        <div>{formatDate(detail.tanggal_lahir)}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>Pekerjaan:</strong>
+                        <div>{detail.pekerjaan || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>Alamat:</strong>
+                        <div>{detail.alamat || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>No HP:</strong>
+                        <div>{detail.no_hp || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>Nama Bank:</strong>
+                        <div>{detail.nama_bank || '-'}</div>
+                      </div>
+                      <div className="mb-3">
+                        <strong>No Rekening:</strong>
+                        <div>{detail.no_rekening || '-'}</div>
+                      </div>
+                    </CCol>
+
+                    <CCol xs={12} md={6} className="ps-md-4">
+                      {/* Right column: Explanation and reasons based on status */}
+                      <div className="mb-3">
+                        <strong>Penjelasan Permohonan:</strong>
+                        <CFormTextarea
+                          readOnly
+                          value={detail.penjelasanpermohonan || 'Tidak ada penjelasan'}
+                          rows={4}
+                          className="mt-1"
+                        />
+                      </div>
+                      {detail.status === 'bidang2' && (
+                        <div className="mb-3">
+                          <strong>Alasan Wakil Ketua Pelaksana:</strong>
+                          <CFormTextarea
+                            readOnly
+                            value={detail.alasanpelaksana || 'Tidak ada alasan'}
+                            rows={3}
+                            className="mt-1"
+                          />
+                        </div>
+                      )}
+                      {detail.status === 'bidang3' && (
+                        <>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Pelaksana:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanpelaksana || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Bidang 2:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanbidang2 || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                        </>
+                      )}
+                      {detail.status === 'baznas' && (
+                        <>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Pelaksana:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanpelaksana || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <strong>Alesan Wakil Ketua Bidang 2:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanbidang2 || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Bidang 3:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanbidang3 || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                        </>
+                      )}
+                      {detail.status === 'selesai' && (
+                        <>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Pelaksana:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanpelaksanan || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Bidang 2:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanbidang2 || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <strong>Alasan Wakil Ketua Bidang 3:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanbidang3 || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <strong>Alasan Ketua Baznas:</strong>
+                            <CFormTextarea
+                              readOnly
+                              value={detail.alasanbaznas || 'Tidak ada alasan'}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </CCol>
+                  </>
+                )}
+              </CRow>
             </CForm>
           )}
         </CModalBody>
+
         <CModalFooter>
           <CButton color="secondary" onClick={() => setVisible(false)}>
             Close
@@ -370,5 +490,7 @@ export const ModalDetail = ({ id }) => {
         </CModalFooter>
       </CModal>
     </>
-  )
-}
+  );
+};
+
+

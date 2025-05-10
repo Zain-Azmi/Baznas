@@ -87,35 +87,34 @@ app.post('/api/refresh', (req, res) => {
   }
 })
 
-// API Untuk Tabel data permohonan
+
 app.get('/api/tabelpermohonan', (req, res) => {
   const query = `
-SELECT 
-    p.*, 
-    u.name AS nama_user, 
-    b.nama_bantuan AS jenis_bantuan, 
-    u.phone AS no_hp, 
-    DATE_FORMAT(p.tanggal_pengajuan, '%d-%m-%Y') AS tanggal_pengajuanformat
-FROM permohonan p
-JOIN users u ON p.user_id = u.id
-JOIN bantuan b ON p.bantuan_id = b.id;  `
+    SELECT 
+      p.*, 
+      pb.full_name AS nama_user,
+      pb.no_hp,
+      DATE_FORMAT(pb.submitted_at, '%d-%m-%Y') AS tanggal_pengajuanformat,
+      b.nama_bantuan AS jenis_bantuan
+    FROM permohonan p
+    JOIN pengajuan_bantuan pb ON p.pengajuan_id = pb.id
+    JOIN bantuan b ON p.bantuan_id = b.id;
+  `;
 
   db.query(query, (err, results) => {
     if (err) {
-      return res.status(500).json({ error: err.message })
+      return res.status(500).json({ error: err.message });
     }
-    res.json(results)
-  })
-})
+    res.json(results);
+  });
+});
+
 const port = process.env.NODE_PORT || 5000
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
 })
 
-app.get('/', (req, res) => {
-  res.send('Backend is running!')
-})
 
 app.put('/api/permohonan/:id', (req, res) => {
   const { id } = req.params
@@ -189,26 +188,25 @@ app.put('/api/permohonan/:id', (req, res) => {
 app.get('/api/detailpermohonan/:id', (req, res) => {
   const { id } = req.params
   const query = `
-SELECT 
-    p.*, 
-    u.name AS nama_user, 
-    b.nama_bantuan AS jenis_bantuan, 
-    u.phone AS no_hp, 
-    DATE_FORMAT(p.tanggal_pengajuan, '%d-%m-%Y') AS tanggal_pengajuanformat
-FROM permohonan p
-JOIN users u ON p.user_id = u.id
-JOIN bantuan b ON p.bantuan_id = b.id
-WHERE p.id = ? ;
-`
-  queryParams = [id]
+    SELECT 
+        pb.*,
+        p.penjelasanpermohonan,
+        p.status,
+        p.alasanpelaksana,
+        p.alasanbidang2,
+        p.alasanbidang3,
+        p.alasanbaznas
+    FROM permohonan p
+    JOIN pengajuan_bantuan pb ON p.pengajuan_id = pb.id
+    WHERE p.id = ?
+  `
 
-  db.query(query, queryParams, (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: err.message })
-    }
+  db.query(query, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message })
     res.json(results)
   })
 })
+
 // Endpoint GET /bantuan untuk mengambil daftar bantuan
 app.get('/api/bantuan', (req, res) => {
   const sql = 'SELECT * FROM bantuan'

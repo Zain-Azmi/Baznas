@@ -36,12 +36,6 @@ const _nav = [
     to: '/manajemenpengguna',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
-  {
-    component: CNavItem,
-    name: 'Laporan & Statistik',
-    to: '/laporan',
-    icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
-  },
 ]
 
 export default _nav
