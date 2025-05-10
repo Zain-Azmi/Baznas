@@ -16,9 +16,13 @@ import {
   CTabContent,
   CTabPane,
   CFormInput,
+  CButton,
 } from '@coreui/react'
-import { TombolSetuju, TombolTolak, TombolDetail } from './tombolaksi'
+import { faDownload } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
+import { TombolSetuju, TombolTolak, TombolDetail } from './tombolaksi'
+import DownloadButton from './tombolaksi'
 const Permohonan = () => {
   const [permohonanData, setPermohonanData] = useState([])
   const [activeTab, setActiveTab] = useState('baru')
@@ -41,6 +45,7 @@ const Permohonan = () => {
   const refreshData = () => {
     fetchData()
   }
+
 
   // Filter data berdasarkan status
   const filterByStatus = (status) =>
@@ -171,6 +176,9 @@ const Permohonan = () => {
                         />{' '}
                         <TombolTolak id={item.id} databaru={refreshData} />{' '}
                         <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
+                        
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -208,7 +216,9 @@ const Permohonan = () => {
                           jumlah={item.jumlah_bantuan}
                         />{' '}
                         <TombolTolak id={item.id} databaru={refreshData} />{' '}
-                        <TombolDetail id={item.id} />
+                                                <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -246,7 +256,9 @@ const Permohonan = () => {
                           jumlah={item.jumlah_bantuan}
                         />{' '}
                         <TombolTolak id={item.id} databaru={refreshData} />{' '}
-                        <TombolDetail id={item.id} />
+                                                <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -284,7 +296,9 @@ const Permohonan = () => {
                           jumlah={item.jumlah_bantuan}
                         />{' '}
                         <TombolTolak id={item.id} databaru={refreshData} />{' '}
-                        <TombolDetail id={item.id} />
+                                                <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -322,7 +336,9 @@ const Permohonan = () => {
                           jumlah={item.jumlah_bantuan}
                         />{' '}
                         <TombolTolak id={item.id} databaru={refreshData} />{' '}
-                        <TombolDetail id={item.id} />
+                                                <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -354,7 +370,9 @@ const Permohonan = () => {
                       <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
                       <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
                       <CTableDataCell>
-                        <TombolDetail id={item.id} />
+                                                <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -386,7 +404,9 @@ const Permohonan = () => {
                       <CTableDataCell>{item.tanggal_pengajuanformat}</CTableDataCell>
                       <CTableDataCell>{formatRupiah(item.jumlah_bantuan)}</CTableDataCell>
                       <CTableDataCell>
-                        <TombolDetail id={item.id} />
+                                                <TombolDetail id={item.id} />
+                        {' '}
+                        <DownloadButton namafile={item.nama_file} />
                       </CTableDataCell>
                     </CTableRow>
                   ))}

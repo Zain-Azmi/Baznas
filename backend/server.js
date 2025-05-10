@@ -94,6 +94,7 @@ app.get('/api/tabelpermohonan', (req, res) => {
       p.*, 
       pb.full_name AS nama_user,
       pb.no_hp,
+      pb.path_file AS nama_file,
       DATE_FORMAT(pb.submitted_at, '%d-%m-%Y') AS tanggal_pengajuanformat,
       b.nama_bantuan AS jenis_bantuan
     FROM permohonan p
