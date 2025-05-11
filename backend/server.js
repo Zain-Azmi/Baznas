@@ -479,11 +479,9 @@ app.post('/api/tambahpengguna', (req, res) => {
   const {
     nama_pengguna,
     role_pengguna,
-    nik_pemohon,
-    no_kk_pemohon,
+    Emailpemohon,
     username,
     password,
-    tanggal_lahir,
     hp,
   } = req.body
 
@@ -495,18 +493,16 @@ app.post('/api/tambahpengguna', (req, res) => {
     }
 
     // Query SQL untuk insert data dengan password yang sudah di-hash
-    const sql = `INSERT INTO users (name, role, nik, nokk, username, password_hash, tanggallahir, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    const sql = `INSERT INTO users (name, role, email, username, password_hash, phone) VALUES (?, ?, ?, ?, ?, ?)`
 
     db.query(
       sql,
       [
         nama_pengguna,
         role_pengguna,
-        nik_pemohon || null,
-        no_kk_pemohon || null,
+        Emailpemohon || null,
         username,
         hash,
-        tanggal_lahir || null,
         hp,
       ],
       (err, result) => {
@@ -522,7 +518,7 @@ app.post('/api/tambahpengguna', (req, res) => {
 
 app.put('/api/editpengguna/:id', (req, res) => {
   const { id } = req.params
-  const { name, role, username, password, phone, nik, nokk, tanggallahir } = req.body
+  const { name, role, username, password, phone, email } = req.body
 
   // Fungsi untuk menjalankan query update
   const runQuery = (passwordHash = null) => {
@@ -530,7 +526,7 @@ app.put('/api/editpengguna/:id', (req, res) => {
     if (passwordHash) {
       sql = `
         UPDATE users 
-        SET name = ?, role = ?, username = ?, password_hash = ?, phone = ?, nik = ?, nokk = ?, tanggallahir = ?
+        SET name = ?, role = ?, username = ?, password_hash = ?, phone = ?, email = ?
         WHERE id = ?
       `
       values = [
@@ -539,15 +535,13 @@ app.put('/api/editpengguna/:id', (req, res) => {
         username,
         passwordHash,
         phone,
-        role === 'pemohon' ? nik : null,
-        role === 'pemohon' ? nokk : null,
-        role === 'pemohon' ? tanggallahir : null,
+        role === 'Pemohon' ? email : null,
         id,
       ]
     } else {
       sql = `
         UPDATE users 
-        SET name = ?, role = ?, username = ?, phone = ?, nik = ?, nokk = ?, tanggallahir = ?
+        SET name = ?, role = ?, username = ?, phone = ?, email = ?
         WHERE id = ?
       `
       values = [
@@ -555,9 +549,7 @@ app.put('/api/editpengguna/:id', (req, res) => {
         role,
         username,
         phone,
-        role === 'pemohon' ? nik : null,
-        role === 'pemohon' ? nokk : null,
-        role === 'pemohon' ? tanggallahir : null,
+        role === 'Pemohon' ? email : null,
         id,
       ]
     }

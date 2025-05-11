@@ -23,11 +23,9 @@ export const ModalTambah = ({ ambildata }) => {
   const [visible, setVisible] = useState(false)
   const [namaPengguna, setNamaPengguna] = useState('')
   const [rolePengguna, setRolePengguna] = useState('')
-  const [nikPemohon, setNikPemohon] = useState('')
-  const [noKkPemohon, setNoKkPemohon] = useState('')
+  const [EmailPemohon, setEmailPemohon] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [tanggalLahir, setTanggalLahir] = useState('')
   const [hp, setHp] = useState('')
 
   const handleSubmit = async () => {
@@ -35,11 +33,9 @@ export const ModalTambah = ({ ambildata }) => {
       const payload = {
         nama_pengguna: namaPengguna,
         role_pengguna: rolePengguna,
-        nik_pemohon: rolePengguna === 'Pemohon' ? nikPemohon : '',
-        no_kk_pemohon: rolePengguna === 'Pemohon' ? noKkPemohon : '',
+        Emailpemohon: rolePengguna === 'Pemohon' ? EmailPemohon : '',
         username: username,
         password: password,
-        tanggal_lahir: rolePengguna === 'Pemohon' ? tanggalLahir : '',
         hp: hp,
       }
 
@@ -54,11 +50,9 @@ export const ModalTambah = ({ ambildata }) => {
       // Reset form
       setNamaPengguna('')
       setRolePengguna('')
-      setNikPemohon('')
-      setNoKkPemohon('')
+      setEmailPemohon('')
       setUsername('')
       setPassword('')
-      setTanggalLahir('')
       setHp('')
 
       ambildata && ambildata()
@@ -139,30 +133,13 @@ export const ModalTambah = ({ ambildata }) => {
             <br />
             {rolePengguna === 'Pemohon' && (
               <>
-                <label>NIK Pemohon</label>
+                <label>Email Pemohon</label>
                 <CFormInput
-                  type="text"
-                  placeholder="Masukkan NIK Pemohon"
+                  type="email"
+                  placeholder="Masukkan Email Pemohon"
                   required
-                  value={nikPemohon}
-                  onChange={(e) => setNikPemohon(e.target.value)}
-                />
-                <br />
-                <label>No.KK Pemohon</label>
-                <CFormInput
-                  type="text"
-                  placeholder="Masukkan No.KK Pemohon"
-                  required
-                  value={noKkPemohon}
-                  onChange={(e) => setNoKkPemohon(e.target.value)}
-                />
-                <br />
-                <label>Tanggal Lahir Pemohon</label>
-                <CFormInput
-                  type="date"
-                  required
-                  value={tanggalLahir}
-                  onChange={(e) => setTanggalLahir(e.target.value)}
+                  value={EmailPemohon}
+                  onChange={(e) => setEmailPemohon(e.target.value)}
                 />
               </>
             )}
@@ -230,110 +207,14 @@ export const ModalHapus = ({ id, nama, ambildata }) => {
   )
 }
 
-export const ModalDetail = ({ id }) => {
-  const [visible, setVisible] = useState(false)
-  const [bantuan, setBantuan] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    if (visible && id) {
-      setLoading(true)
-      axios
-        .get(`http://localhost:5000/api/detailbantuan/${id}`)
-        .then((response) => {
-          console.log('Data detail bantuan diterima:', response.data)
-          // Asumsikan response.data berupa array dan ambil item pertama
-          setBantuan(response.data[0])
-          setLoading(false)
-        })
-        .catch((err) => {
-          console.error('Gagal mengambil data detail bantuan:', err)
-          setError('Gagal mengambil data detail bantuan')
-          setLoading(false)
-        })
-    }
-  }, [visible, id])
-
-  return (
-    <>
-      <CButton color="info" onClick={() => setVisible(true)}>
-        <FontAwesomeIcon icon={faEye} />
-      </CButton>
-      <CModal
-        backdrop="static"
-        alignment="center"
-        visible={visible}
-        onClose={() => setVisible(false)}
-        aria-labelledby="modal-detail-title"
-      >
-        <CModalHeader>
-          <CModalTitle id="modal-detail-title">Detail Bantuan</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          {loading ? (
-            <p>Loading detail bantuan...</p>
-          ) : error ? (
-            <p>{error}</p>
-          ) : bantuan ? (
-            <>
-              <p>
-                <strong>Persyaratan Umum:</strong>
-              </p>
-              {bantuan.persyaratan_umum && bantuan.persyaratan_umum.length > 0 ? (
-                <ul>
-                  {bantuan.persyaratan_umum.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Tidak ada persyaratan umum.</p>
-              )}
-
-              <p>
-                <strong>Persyaratan Tambahan:</strong>
-              </p>
-              {bantuan.persyaratan_tambahan && bantuan.persyaratan_tambahan.length > 0 ? (
-                <ul>
-                  {bantuan.persyaratan_tambahan.map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Tidak ada persyaratan tambahan.</p>
-              )}
-
-              <p>
-                <strong>Keterangan Tambahan:</strong>
-              </p>
-              <CFormTextarea
-                readOnly
-                value={bantuan.keterangan || 'Tidak ada keterangan tambahan.'}
-                rows={3}
-              />
-            </>
-          ) : (
-            <p>Data detail tidak tersedia.</p>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setVisible(false)}>
-            Close
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </>
-  )
-}
 export const ModalEdit = ({ id, ambildata }) => {
   const [visible, setVisible] = useState(false)
   const [namaPengguna, setNamaPengguna] = useState('')
   const [rolePengguna, setRolePengguna] = useState('')
-  const [nikPemohon, setNikPemohon] = useState('')
-  const [noKkPemohon, setNoKkPemohon] = useState('')
+  const [EmailPemohon, setEmailPemohon] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [tanggalLahir, setTanggalLahir] = useState('')
   const [hp, setHp] = useState('')
 
   // Fetch detail data ketika modal dibuka
@@ -349,10 +230,8 @@ export const ModalEdit = ({ id, ambildata }) => {
             setUsername(detail.username)
             setHp(detail.phone)
             // Hanya prefill data pemohon jika role-nya pemohon
-            if (detail.role === 'pemohon') {
-              setNikPemohon(detail.nik || '')
-              setNoKkPemohon(detail.nokk || '')
-              setTanggalLahir(detail.tanggallahir || '')
+            if (detail.role === 'Pemohon') {
+              setEmailPemohon(detail.email || '')
             }
           }
         })
@@ -373,12 +252,9 @@ export const ModalEdit = ({ id, ambildata }) => {
         name: namaPengguna,
         role: rolePengguna,
         username: username,
-        // Hanya update password jika diisi, jika tidak, backend bisa mengabaikannya
         password: password,
         phone: hp,
-        nik: rolePengguna === 'pemohon' ? nikPemohon : '',
-        nokk: rolePengguna === 'pemohon' ? noKkPemohon : '',
-        tanggallahir: rolePengguna === 'pemohon' ? tanggalLahir : '',
+        email: rolePengguna === 'Pemohon' ? EmailPemohon : '',
       }
 
       const response = await axios.put(`http://localhost:5000/api/editpengguna/${id}`, payload)
@@ -460,36 +336,19 @@ export const ModalEdit = ({ id, ambildata }) => {
               onChange={(e) => setRolePengguna(e.target.value)}
             >
               <option value="">Pilih Role Pengguna</option>
-              <option value="super_admin">Admin</option>
-              <option value="pemohon">Pemohon</option>
+              <option value="Admin">Admin</option>
+              <option value="Pemohon">Pemohon</option>
             </CFormSelect>
             <br />
-            {rolePengguna === 'pemohon' && (
+            {rolePengguna === 'Pemohon' && (
               <>
-                <label>NIK Pemohon</label>
+                <label>Email Pemohon</label>
                 <CFormInput
-                  type="text"
-                  placeholder="Masukkan NIK Pemohon"
+                  type="email"
+                  placeholder="Masukkan Email Pemohon"
                   required
-                  value={nikPemohon}
-                  onChange={(e) => setNikPemohon(e.target.value)}
-                />
-                <br />
-                <label>No. KK Pemohon</label>
-                <CFormInput
-                  type="text"
-                  placeholder="Masukkan No. KK Pemohon"
-                  required
-                  value={noKkPemohon}
-                  onChange={(e) => setNoKkPemohon(e.target.value)}
-                />
-                <br />
-                <label>Tanggal Lahir</label>
-                <CFormInput
-                  type="date"
-                  required
-                  value={tanggalLahir}
-                  onChange={(e) => setTanggalLahir(e.target.value)}
+                  value={EmailPemohon}
+                  onChange={(e) => setEmailPemohon(e.target.value)}
                 />
               </>
             )}
